@@ -3,29 +3,89 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   bug-sales-processor
 
-  Sample SAM Template for bug-sales-processor
-  
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Timeout: 3
+  Lambda the handle bug sales process
+Parameters:
+  Env: string
 
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  # IAM
+  BugSalesProcessorLambdaRole:
+    Type: 'AWS::IAM::Role'
     Properties:
-      CodeUri: hello-world/
+      RoleName: !Sub ${Env}-bug-sales-processdor-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: MyLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+  
+  LambdaInvokePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref BugSalesProcessorLambda
+      Action: 'lambda:InvokeFunction'
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BugSalesProcessorApiGateway}/${Env}/*'
+
+  LambdaInvokePolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Sub ${Env}-bug-sales-lambda-invoke-policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: 'lambda:InvokeFunction'
+            Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${BugSalesProcessorLambda}'
+        Roles:
+            - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${Env}-bug-sales-processdor-lambda-role'
+
+  LambdaInvokeRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub ${Env}-bug-sales-lambda-invoke-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: !Sub ${Env}-bug-sales-lambda-invoke-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'lambda:InvokeFunction'
+                Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${BugSalesProcessorLambda}'
+
+  # LAMBDA
+  BugSalesProcessorLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
       Handler: app.lambdaHandler
       Runtime: nodejs18.x
       Architectures:
         - x86_64
-      Events:
-        HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            Path: /hello
-            Method: get
-    Metadata: # Manage esbuild properties
+      MemorySize: 128
+      Timeout: 30
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${Env}-bug-sales-processdor-lambda-role'
+    Metadata:
       BuildMethod: esbuild
       BuildProperties:
         Minify: true
@@ -33,17 +93,34 @@ Resources:
         Sourcemap: true
         EntryPoints: 
         - app.ts
-
-Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  
+  # API GATEWAY
+  BugSalesProcessorApiGateway:
+    Type: 'AWS::Serverless::Api'
+    Properties:
+      StageName: !Ref Env
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title: Bug Sales Processor API Gateway
+        paths:
+          /sales:
+            post:
+              x-amazon-apigateway-integration:
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BugSalesProcessorLambda.Arn}/invocations'
+                httpMethod: POST
+                type: aws_proxy
+              responses:
+                '200':
+                  description: '200 response'
+              produces:
+                - 'application/json'
+            x-amazon-apigateway-any-method:
+              responses: {}
+              security:
+                - lambda_invoke_permission: []
+          /sales/{proxy+}:
+            x-amazon-apigateway-any-method:
+              responses: {}
+              security:
+                - lambda_invoke_permission: []
