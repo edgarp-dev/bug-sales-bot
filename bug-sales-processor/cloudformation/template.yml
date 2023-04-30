@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  bug-sales-processor
+
+  Lambda the handle bug sales process
+
+Parameters:
+  Env:
+    Type: String
+    AllowedValues:
+      - dev
+      - prod
+
+Resources:
+  # IAM
+  BugSalesProcessorLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub ${Env}-bug-sales-processdor-lambda-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: MyLambdaPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "arn:aws:logs:*:*:*"
+              - Effect: Allow
+                Action:
+                  - "dynamodb:PutItem"
+                  - "dynamodb:GetItem"
+                  - "dynamodb:DeleteItem"
+                  - "dynamodb:UpdateItem"
+                  - "dynamodb:Query"
+                  - "dynamodb:Scan"
+                Resource: !GetAtt BugSalesDB.Arn
+
+  # LAMBDA
+  BugSalesProcessorLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.lambdaHandler
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 30
+      Role: !GetAtt BugSalesProcessorLambdaRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref BugSalesDB
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            Path: "/sales"
+            Method: post
+            RestApiId: !Ref BuSalesProcessorApi
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: true
+        EntryPoints:
+          - app.ts
+
+  # API GATEWAY
+  BuSalesProcessorApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Env
+
+  # DYNAMO DB
+  BugSalesDB:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      TableName: !Sub ${Env}-bug-sales-db
+      AttributeDefinitions:
+        - AttributeName: Id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+Outputs:
+  HelloWorldApi:
+    Description: "BuSalesProcessorApi endpoint URL"
+    Value: !Sub "https://${BuSalesProcessorApi}.execute-api.${AWS::Region}.amazonaws.com/${Env}/sales/"
