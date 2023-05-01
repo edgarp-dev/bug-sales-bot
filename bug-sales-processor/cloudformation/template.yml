@@ -17,7 +17,7 @@ Resources:
   BugSalesProcessorLambdaRole:
     Type: "AWS::IAM::Role"
     Properties:
-      RoleName: !Sub ${Env}-bug-sales-processdor-lambda-role
+      RoleName: !Sub ${Env}-bug-sales-processor-lambda-role
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -26,7 +26,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: "sts:AssumeRole"
       Policies:
-        - PolicyName: MyLambdaPolicy
+        - PolicyName: !Sub ${Env}-bug-sales-processor-lambda-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -60,7 +60,7 @@ Resources:
       Role: !GetAtt BugSalesProcessorLambdaRole.Arn
       Environment:
         Variables:
-          TABLE_NAME: !Ref BugSalesDB
+          BUG_SALES_DB_NAME: !Ref BugSalesDB
       Events:
         HttpPost:
           Type: Api
@@ -89,10 +89,10 @@ Resources:
     Properties:
       TableName: !Sub ${Env}-bug-sales-db
       AttributeDefinitions:
-        - AttributeName: Id
+        - AttributeName: id
           AttributeType: S
       KeySchema:
-        - AttributeName: Id
+        - AttributeName: id
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 

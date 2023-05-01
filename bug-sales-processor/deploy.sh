@@ -56,7 +56,7 @@ fi
 
 cfn-lint ./cloudformation/*
 
-echo "ENV: $ENV"
+echo "Selected env: $ENV"
 
 AWS_REGION="us-east-1"
 ARTIFACTS_S3_BUCKET="$ENV-bug-sales-processor-artifacts"

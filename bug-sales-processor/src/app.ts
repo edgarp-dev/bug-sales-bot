@@ -1,8 +1,27 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 
 export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
-        console.log(event.body);
+        const dbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
+        console.log('------->' + event.body);
+        const params = {
+            TableName: process.env.BUG_SALES_DB_NAME,
+            Item: {
+                id: {
+                    S: Math.random().toString(16).slice(2),
+                },
+                name: {
+                    S: 'Test name',
+                },
+                body: {
+                    S: 'Test body',
+                },
+            },
+        };
+
+        await dbClient.send(new PutItemCommand(params));
+
         return {
             statusCode: 200,
             body: JSON.stringify({
