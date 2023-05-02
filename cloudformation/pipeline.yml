@@ -11,7 +11,7 @@ Parameters:
     Type: String
   Branch:
     Type: String
-  
+
 Resources:
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -40,7 +40,7 @@ Resources:
                 BranchName: !Ref Branch
                 OutputArtifactFormat: "CODE_ZIP"
               RunOrder: 1
-        
+
         - Name: Validate
           Actions:
             - InputArtifacts:
@@ -55,7 +55,6 @@ Resources:
                 ProjectName: !GetAtt BugSalesProcessorLambdaSanityCodeBuild.Outputs.CodeBuildProjectName
               RunOrder: 2
 
-  
   CodePipelineRole:
     Type: AWS::IAM::Role
     Properties:
@@ -82,7 +81,7 @@ Resources:
                   - "iam:PassRole"
                   - "codestar-connections:UseConnection"
                 Resource: "*"
-  
+
   BugSalesProcessorLambdaSanityCodeBuild:
     Type: AWS::CloudFormation::Stack
     Properties:
