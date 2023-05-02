@@ -1,0 +1,12 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18.x
+    commands:
+      - cd bug-sales-processor/src
+      - yarn install
+  build:
+    commands:
+      - ls
