@@ -5,6 +5,7 @@ phases:
     runtime-versions:
       nodejs: 18.x
     commands:
+      - npm install -g yarn
       - cd bug-sales-processor/src
       - yarn install
   build:
