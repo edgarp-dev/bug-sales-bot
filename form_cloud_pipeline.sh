@@ -3,19 +3,26 @@ set -euo pipefail
 
 show_help() {
 cat << EOF
-Usage: $0 --env|-e ENV
+Usage: $0 --env|-e ENV [--current-branch|-c]
 
 This script receives a parameter ENV which can be provided using the --env or -e flag.
+Additionally, it can receive an optional flag --current-branch or -c to use the current Git branch.
 
 Available options:
     -e, --env           Environment value to use (mandatory, accepted values: dev, prod)
+    -c, --current-branch Use the current Git branch (optional, only used with 'dev' environment)
     -h, --help          Show this help message
 
 Examples:
     $0 --env prod
     $0 -e dev
+    $0 --env dev --current-branch
 EOF
 }
+
+ENV=""
+CURRENT_BRANCH="main"
+USE_CURRENT_BRANCH=false
 
 while [[ $# -gt 0 ]]
 do
@@ -36,6 +43,10 @@ case $key in
         ;;
     esac
     ;;
+    --current-branch|-c)
+    USE_CURRENT_BRANCH=true
+    shift
+    ;;
     -h|--help)
     show_help
     exit 0
@@ -54,9 +65,20 @@ if [ -z "$ENV" ]; then
   exit 1
 fi
 
+if [ "$ENV" = "prod" ] && [ "$USE_CURRENT_BRANCH" = "true" ]; then
+  echo "Error: The --current-branch flag can only be used with the 'dev' environment"
+  show_help
+  exit 1
+fi
+
+if [ "$USE_CURRENT_BRANCH" = "true" ]; then
+  CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
+fi
+
 cfn-lint ./cloudformation/*
 
 echo "Selected env: $ENV"
+echo "Current branch: $CURRENT_BRANCH"
 
 AWS_REGION='us-east-1'
 ARTIFACTS_S3_BUCKET=$ENV-bug-sales-artifacts-bucket
@@ -71,10 +93,10 @@ else
 fi
 
 echo "Uploading infrastructure files"
-aws s3 ./cloudformation s3://$ARTIFACTS_S3_BUCKET --recursive
+aws s3 sync ./cloudformation s3://$ARTIFACTS_S3_BUCKET/cloudformation
 
 echo "Deploying changes"
 aws cloudformation deploy --stack-name $ENV-bug-sales-bot \
     --template-file ./cloudformation/main.yml \
-    --parameter-overrides Env=$ENV ArtifactsBucket=$ARTIFACTS_S3_BUCKET
-    /
+    --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+    --parameter-overrides Env=$ENV ArtifactsBucket=$ARTIFACTS_S3_BUCKET Branch=$CURRENT_BRANCH
