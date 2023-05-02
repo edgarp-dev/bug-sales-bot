@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 show_help() {
 cat << EOF
@@ -7,12 +8,12 @@ Usage: $0 --env|-e ENV
 This script receives a parameter ENV which can be provided using the --env or -e flag.
 
 Available options:
-    -e, --env           Environment value to use (mandatory)
+    -e, --env           Environment value to use (mandatory, accepted values: dev, prod)
     -h, --help          Show this help message
 
 Examples:
-    $0 --env production
-    $0 -e staging
+    $0 --env prod
+    $0 -e dev
 EOF
 }
 
@@ -22,9 +23,18 @@ key="$1"
 
 case $key in
     --env|-e)
-    ENV="$2"
-    shift
-    shift
+    case "$2" in
+        dev|prod)
+        ENV="$2"
+        shift
+        shift
+        ;;
+        *)
+        echo "Invalid value for --env, accepted values: dev, prod"
+        show_help
+        exit 1
+        ;;
+    esac
     ;;
     -h|--help)
     show_help
@@ -44,8 +54,27 @@ if [ -z "$ENV" ]; then
   exit 1
 fi
 
-echo "The value of --env is: $ENV"
+cfn-lint ./cloudformation/*
+
+echo "Selected env: $ENV"
 
 AWS_REGION='us-east-1'
+ARTIFACTS_S3_BUCKET=$ENV-bug-sales-artifacts-bucket
 
-# TODO Agregar creacion de bucket de s3
+if aws s3api head-bucket --bucket $ARTIFACTS_S3_BUCKET 2>/dev/null;
+then
+    echo "$ARTIFACTS_S3_BUCKET exists"
+else
+    echo "$ARTIFACTS_S3_BUCKET DOES NOT exists, creating it..."
+    aws s3api create-bucket --bucket $ARTIFACTS_S3_BUCKET --region $AWS_REGION
+    echo "$ARTIFACTS_S3_BUCKET bucket created in region $AWS_REGION."
+fi
+
+echo "Uploading infrastructure files"
+aws s3 ./cloudformation s3://$ARTIFACTS_S3_BUCKET --recursive
+
+echo "Deploying changes"
+aws cloudformation deploy --stack-name $ENV-bug-sales-bot \
+    --template-file ./cloudformation/main.yml \
+    --parameter-overrides Env=$ENV ArtifactsBucket=$ARTIFACTS_S3_BUCKET
+    /
