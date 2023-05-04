@@ -81,7 +81,7 @@ echo "Selected env: $ENV"
 echo "Current branch: $CURRENT_BRANCH"
 
 AWS_REGION='us-east-1'
-ARTIFACTS_S3_BUCKET=$ENV-bug-sales-artifacts-bucket
+ARTIFACTS_S3_BUCKET=bug-sales-artifacts-bucket-$ENV
 
 if aws s3api head-bucket --bucket $ARTIFACTS_S3_BUCKET 2>/dev/null;
 then
@@ -96,7 +96,7 @@ echo "Uploading infrastructure files"
 aws s3 sync ./cloudformation s3://$ARTIFACTS_S3_BUCKET/cloudformation
 
 echo "Deploying changes"
-aws cloudformation deploy --stack-name $ENV-bug-sales-bot \
+aws cloudformation deploy --stack-name bug-sales-bot-$ENV \
     --template-file ./cloudformation/main.yml \
     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --parameter-overrides Env=$ENV ArtifactsBucket=$ARTIFACTS_S3_BUCKET Branch=$CURRENT_BRANCH

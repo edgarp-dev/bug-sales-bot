@@ -59,7 +59,7 @@ cfn-lint ./cloudformation/*
 echo "Selected env: $ENV"
 
 AWS_REGION="us-east-1"
-ARTIFACTS_S3_BUCKET="$ENV-bug-sales-processor-artifacts"
+ARTIFACTS_S3_BUCKET="bug-sales-processor-artifacts-$Env"
 
 if aws s3api head-bucket --bucket $ARTIFACTS_S3_BUCKET 2>/dev/null;
 then
@@ -70,11 +70,11 @@ else
     echo "$ARTIFACTS_S3_BUCKET bucket created in region $AWS_REGION."
 fi
 
-echo "Building $ENV-bug-sales-processor lambda"
+echo "Building bug-sales-processor-$ENV lambda"
 sam build --template-file ./cloudformation/template.yml --base-dir ./
 
-echo "Uploading $ENV-bug-sales-processor lambda artifacts"
+echo "Uploading bug-sales-processor$ENV lambda artifacts"
 sam package --s3-bucket $ARTIFACTS_S3_BUCKET --output-template-file output.yml --region $AWS_REGION
 
-echo "Deploying $ENV-bug-sales-processor lambda"
-sam deploy --template-file output.yml --stack-name $ENV-bug-sales-processor-lambda --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --parameter-overrides "Env=$ENV"
+echo "Deploying bug-sales-processor lambda$ENV"
+sam deploy --template-file output.yml --stack-name bug-sales-processor-lambda-$ENV --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --parameter-overrides "Env=$ENV"

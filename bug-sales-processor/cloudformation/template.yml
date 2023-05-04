@@ -17,7 +17,7 @@ Resources:
   BugSalesProcessorLambdaRole:
     Type: "AWS::IAM::Role"
     Properties:
-      RoleName: !Sub ${Env}-bug-sales-processor-lambda-role
+      RoleName: !Sub bug-sales-processor-lambda-role-${Env}
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -26,7 +26,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: "sts:AssumeRole"
       Policies:
-        - PolicyName: !Sub ${Env}-bug-sales-processor-lambda-policy
+        - PolicyName: !Sub bug-sales-processor-lambda-policy-${Env}
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -87,7 +87,7 @@ Resources:
   BugSalesDB:
     Type: "AWS::DynamoDB::Table"
     Properties:
-      TableName: !Sub ${Env}-bug-sales-db
+      TableName: !Sub bug-sales-db-${Env}
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S

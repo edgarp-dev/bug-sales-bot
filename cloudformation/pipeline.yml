@@ -19,7 +19,7 @@ Resources:
       ArtifactStore:
         Location: !Ref ArtifactsBucket
         Type: S3
-      Name: !Sub ${Env}-bug-sales-bot-pipeline
+      Name: !Sub bug-sales-bot-pipeline-${Env}
       RestartExecutionOnUpdate: false
       RoleArn: !GetAtt CodePipelineRole.Arn
       Stages:
@@ -58,7 +58,7 @@ Resources:
   CodePipelineRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${Env}-bug-sales-bot-pipeline-role
+      RoleName: !Sub bug-sales-bot-pipeline-role-${Env}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -67,7 +67,7 @@ Resources:
               Service: "codepipeline.amazonaws.com"
             Action: "sts:AssumeRole"
       Policies:
-        - PolicyName: !Sub ${Env}-bug-sales-bot-codepipeline-role
+        - PolicyName: !Sub bug-sales-bot-codepipeline-role-${Env}
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -88,6 +88,6 @@ Resources:
       TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yml
       TimeoutInMinutes: 10
       Parameters:
-        Name: !Sub ${Env}-bug-sales-processor-lambda-sanity
+        Name: !Sub bug-sales-processor-lambda-sanity-${Env}
         BuildSpec: buildspec/bug-sales-processor-lambda-sanity.yml
         Env: !Ref Env

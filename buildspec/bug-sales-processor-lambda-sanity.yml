@@ -10,4 +10,4 @@ phases:
       - yarn install
   build:
     commands:
-      - ls
+      - yarn sanity
