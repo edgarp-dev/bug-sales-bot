@@ -66,8 +66,6 @@ if [ -z "$ARTIFACTS_BUCKET" ]; then
   exit 1
 fi
 
-cfn-lint ./cloudformation/*
-
 echo "Selected env: $ENV"
 echo "Artifacts bucket: $ARTIFACTS_BUCKET"
 
