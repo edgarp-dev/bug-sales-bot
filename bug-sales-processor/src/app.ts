@@ -5,6 +5,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
     try {
         const dbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
         console.log('------->' + event.body);
+
         const params = {
             TableName: process.env.BUG_SALES_DB_NAME,
             Item: {

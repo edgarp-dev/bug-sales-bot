@@ -8,9 +8,11 @@
     "license": "MIT",
     "scripts": {
         "dev": "npx nodemon",
-        "lint": "eslint '*.ts' --quiet --fix",
+        "lint": "eslint '*.ts'",
+        "lint:fix": "eslint '*.ts' --fix",
+        "format": "prettier --config .prettierrc.js '*.ts' --write",
         "compile": "tsc",
-        "sanity": "yarn compile"
+        "sanity": "yarn compile && yarn lint"
     },
     "dependencies": {
         "@aws-sdk/client-dynamodb": "^3.321.1",
