@@ -3,17 +3,18 @@ set -euo pipefail
 
 show_help() {
 cat << EOF
-Usage: $0 --env|-e ENV
+Usage: $0 --env|-e ENV --artifacts-bucket|-b BUCKET
 
-This script receives a parameter ENV which can be provided using the --env or -e flag.
+This script receives a parameter ENV which can be provided using the --env or -e flag, and a artifacts bucket using --artifacts-bucket or -b flag.
 
 Available options:
     -e, --env           Environment value to use (mandatory, accepted values: dev, prod)
+    -b, --artifacts-bucket  Pipeline artifacts bucket where artifacts will be stored (mandatory)
     -h, --help          Show this help message
 
 Examples:
-    $0 --env prod
-    $0 -e dev
+    $0 --env prod --artifacts-bucket my-bucket
+    $0 -e dev -b my-bucket
 EOF
 }
 
@@ -36,6 +37,11 @@ case $key in
         ;;
     esac
     ;;
+    --artifacts-bucket|-b)
+    ARTIFACTS_BUCKET="$2"
+    shift
+    shift
+    ;;
     -h|--help)
     show_help
     exit 0
@@ -54,27 +60,36 @@ if [ -z "$ENV" ]; then
   exit 1
 fi
 
+if [ -z "$ARTIFACTS_BUCKET" ]; then
+  echo "You must provide a value for --artifacts-bucket"
+  show_help
+  exit 1
+fi
+
 cfn-lint ./cloudformation/*
 
 echo "Selected env: $ENV"
+echo "Artifacts bucket: $ARTIFACTS_BUCKET"
 
 AWS_REGION="us-east-1"
-ARTIFACTS_S3_BUCKET="bug-sales-processor-artifacts-$Env"
+LAMBDA_ARTIFACTS_S3_BUCKET="$ARTIFACTS_BUCKET-bug-sales-processor-artifacts-$Env"
 
-if aws s3api head-bucket --bucket $ARTIFACTS_S3_BUCKET 2>/dev/null;
-then
-    echo "$ARTIFACTS_S3_BUCKET exists"
-else
-    echo "$ARTIFACTS_S3_BUCKET DOES NOT exists, creating it..."
-    aws s3api create-bucket --bucket $ARTIFACTS_S3_BUCKET --region $AWS_REGION
-    echo "$ARTIFACTS_S3_BUCKET bucket created in region $AWS_REGION."
-fi
+echo $LAMBDA_ARTIFACTS_S3_BUCKET
 
-echo "Building bug-sales-processor-$ENV lambda"
-sam build --template-file ./cloudformation/template.yml --base-dir ./
+# if aws s3api head-bucket --bucket $ARTIFACTS_S3_BUCKET 2>/dev/null;
+# then
+#     echo "$ARTIFACTS_S3_BUCKET exists"
+# else
+#     echo "$ARTIFACTS_S3_BUCKET DOES NOT exists, creating it..."
+#     aws s3api create-bucket --bucket $ARTIFACTS_S3_BUCKET --region $AWS_REGION
+#     echo "$ARTIFACTS_S3_BUCKET bucket created in region $AWS_REGION."
+# fi
 
-echo "Uploading bug-sales-processor$ENV lambda artifacts"
-sam package --s3-bucket $ARTIFACTS_S3_BUCKET --output-template-file output.yml --region $AWS_REGION
+# echo "Building bug-sales-processor-$ENV lambda"
+# sam build --template-file ./cloudformation/template.yml --base-dir ./
 
-echo "Deploying bug-sales-processor lambda$ENV"
-sam deploy --template-file output.yml --stack-name bug-sales-processor-lambda-$ENV --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --parameter-overrides "Env=$ENV"
+# echo "Uploading bug-sales-processor$ENV lambda artifacts"
+# sam package --s3-bucket $ARTIFACTS_S3_BUCKET --output-template-file output.yml --region $AWS_REGION
+
+# echo "Deploying bug-sales-processor lambda$ENV"
+# sam deploy --template-file output.yml --stack-name bug-sales-processor-lambda-$ENV --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --parameter-overrides "Env=$ENV"

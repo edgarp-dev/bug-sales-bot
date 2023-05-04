@@ -10,4 +10,4 @@ phases:
       - yarn install
   build:
     commands:
-      - ls
+      - ./deploy -e $ENV -b ARTIFACTS_BUCKET

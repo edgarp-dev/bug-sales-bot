@@ -55,7 +55,7 @@ Resources:
                 ProjectName: !GetAtt BugSalesProcessorLambdaSanity.Outputs.CodeBuildProjectName
               RunOrder: 2
         
-        - Name: Build
+        - Name: Deploy
           Actions:
             - InputArtifacts:
                 - Name: SourceCode
@@ -64,9 +64,9 @@ Resources:
                 Owner: AWS
                 Version: "1"
                 Provider: CodeBuild
-              Name: Bug-Sales-Processor-Lambda-Build
+              Name: Bug-Sales-Processor-Lambda-Deploy
               Configuration:
-                ProjectName: !GetAtt BugSalesProcessorLambdaBuild.Outputs.CodeBuildProjectName
+                ProjectName: !GetAtt BugSalesProcessorLambdaDeploy.Outputs.CodeBuildProjectName
               RunOrder: 3
 
   CodePipelineRole:
@@ -106,12 +106,13 @@ Resources:
         BuildSpec: buildspec/bug-sales-processor-lambda-sanity.yml
         Env: !Ref Env
   
-  BugSalesProcessorLambdaBuild:
+  BugSalesProcessorLambdaDeploy:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yml
       TimeoutInMinutes: 10
       Parameters:
-        Name: !Sub bug-sales-processor-lambda-build-${Env}
-        BuildSpec: buildspec/bug-sales-processor-lambda-build.yml
+        Name: !Sub bug-sales-processor-lambda-deploy-${Env}
+        BuildSpec: buildspec/bug-sales-processor-lambda-deploy.yml
         Env: !Ref Env
+        ArtifactsBucket: !Ref ArtifactsBucket
