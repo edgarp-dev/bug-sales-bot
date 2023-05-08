@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eo pipefail
 
 show_help() {
 cat << EOF
@@ -21,7 +21,6 @@ EOF
 while [[ $# -gt 0 ]]
 do
 key="$1"
-
 case $key in
     --env|-e)
     case "$2" in
@@ -66,28 +65,19 @@ if [ -z "$ARTIFACTS_BUCKET" ]; then
   exit 1
 fi
 
+AWS_REGION="us-east-1"
+LAMBDA_ARTIFACTS_S3_BUCKET="$ARTIFACTS_BUCKET/bug-sales-processor-artifacts-$ENV"
+
 echo "Selected env: $ENV"
 echo "Artifacts bucket: $ARTIFACTS_BUCKET"
 
-AWS_REGION="us-east-1"
-LAMBDA_ARTIFACTS_S3_BUCKET="$ARTIFACTS_BUCKET-bug-sales-processor-artifacts-$Env"
-
 echo $LAMBDA_ARTIFACTS_S3_BUCKET
 
-# if aws s3api head-bucket --bucket $ARTIFACTS_S3_BUCKET 2>/dev/null;
-# then
-#     echo "$ARTIFACTS_S3_BUCKET exists"
-# else
-#     echo "$ARTIFACTS_S3_BUCKET DOES NOT exists, creating it..."
-#     aws s3api create-bucket --bucket $ARTIFACTS_S3_BUCKET --region $AWS_REGION
-#     echo "$ARTIFACTS_S3_BUCKET bucket created in region $AWS_REGION."
-# fi
-
 # echo "Building bug-sales-processor-$ENV lambda"
-# sam build --template-file ./cloudformation/template.yml --base-dir ./
+sam build --template-file ./cloudformation/template.yml --base-dir ./
 
 # echo "Uploading bug-sales-processor$ENV lambda artifacts"
-# sam package --s3-bucket $ARTIFACTS_S3_BUCKET --output-template-file output.yml --region $AWS_REGION
+sam package --s3-bucket $ARTIFACTS_S3_BUCKET --output-template-file output.yml --region $AWS_REGION
 
 # echo "Deploying bug-sales-processor lambda$ENV"
-# sam deploy --template-file output.yml --stack-name bug-sales-processor-lambda-$ENV --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --parameter-overrides "Env=$ENV"
+sam deploy --template-file output.yml --stack-name bug-sales-processor-lambda-$ENV --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --parameter-overrides "Env=$ENV"
