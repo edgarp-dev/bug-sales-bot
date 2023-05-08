@@ -71,6 +71,7 @@ Resources:
                   - "lambda:*"
                   - "ssm:GetParameters"
                   - "scheduler:*"
+                  - "dynamodb:*"
                 Resource: "*"
           PolicyName: !Sub ${Name}-codebuild-policy
 
