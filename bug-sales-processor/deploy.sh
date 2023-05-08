@@ -69,15 +69,16 @@ AWS_REGION="us-east-1"
 LAMBDA_ARTIFACTS_S3_BUCKET="$ARTIFACTS_BUCKET/bug-sales-processor-artifacts-$ENV"
 
 echo "Selected env: $ENV"
-echo "Artifacts bucket: $ARTIFACTS_BUCKET"
-
-echo $LAMBDA_ARTIFACTS_S3_BUCKET
+echo "Artifacts bucket: $LAMBDA_ARTIFACTS_S3_BUCKET"
 
 # echo "Building bug-sales-processor-$ENV lambda"
 sam build --template-file ./cloudformation/template.yml --base-dir ./
 
 # echo "Uploading bug-sales-processor$ENV lambda artifacts"
-sam package --s3-bucket $ARTIFACTS_S3_BUCKET --output-template-file output.yml --region $AWS_REGION
+sam package --s3-bucket $LAMBDA_ARTIFACTS_S3_BUCKET --output-template-file output.yml --region $AWS_REGION
 
 # echo "Deploying bug-sales-processor lambda$ENV"
-sam deploy --template-file output.yml --stack-name bug-sales-processor-lambda-$ENV --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --parameter-overrides "Env=$ENV"
+sam deploy --template-file output.yml \
+    --stack-name bug-sales-processor-lambda-$ENV \
+    --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+    --parameter-overrides "Env=$ENV"
