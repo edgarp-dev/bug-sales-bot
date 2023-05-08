@@ -11,4 +11,5 @@ phases:
       - cd ..
   build:
     commands:
+      - ls
       - ./deploy -e $ENV -b $ARTIFACTS_BUCKET
