@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+    notifications-processor infrastructure resources
+
+Parameters:
+    Env:
+        Type: String
+
+Resources:
+    NotificationProcessorLambda:
+        Type: AWS::Serverless::Function
+        Properties:
+            CodeUri: src/
+            Handler: app.lambdaHandler
+            Runtime: nodejs18.x
+            MemorySize: 128
+            Timeout: 30
+            Architectures:
+                - x86_64
+        Metadata:
+            BuildMethod: esbuild
+            BuildProperties:
+                Minify: true
+                Target: "es2020"
+                Sourcemap: true
+                EntryPoints:
+                    - app.ts
+
+    NotificationsSNSTopic:
+        Type: AWS::SNS::Topic
+        Properties:
+            Subscription:
+                - Protocol: lambda
+                  Endpoint: !GetAtt NotificationProcessorLambda.Arn
+
+    NotificationProcessorLambdaPermission:
+        Type: AWS::Lambda::Permission
+        Properties:
+            Action: "lambda:InvokeFunction"
+            FunctionName: !Ref NotificationProcessorLambda
+            Principal: sns.amazonaws.com
+
+    NotificationsTopicSSMParameter:
+        Type: AWS::SSM::Parameter
+        Properties:
+            DataType: text
+            Name: !Sub "bug-sales-bot-notifications-processor-sns-topic-${Env}"
+            Tier: Standard
+            Type: String
+            Value: !GetAtt NotificationsSNSTopic.TopicName
