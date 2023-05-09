@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  Bug sales bot main infrastructure
+
+Parameters:
+  ArtifactsBucket:
+    Type: String
+  Env:
+    Type: String
+    AllowedValues:
+      - dev
+      - prod
+  Branch:
+    Type: String
+
+Resources:
+  Pipeline:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/pipeline.yml
+      TimeoutInMinutes: 10
+      Parameters:
+        Env: !Ref Env
+        ArtifactsBucket: !Ref ArtifactsBucket
+        Branch: !Ref Branch

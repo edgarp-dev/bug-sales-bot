@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  Bug sales bot pipeline
+Parameters:
+  Env:
+    Type: String
+    AllowedValues:
+      - dev
+      - prod
+  ArtifactsBucket:
+    Type: String
+  Branch:
+    Type: String
+
+Resources:
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref ArtifactsBucket
+        Type: S3
+      Name: !Sub bug-sales-bot-pipeline-${Env}
+      RestartExecutionOnUpdate: false
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - InputArtifacts: []
+              ActionTypeId:
+                Version: "1"
+                Owner: AWS
+                Category: Source
+                Provider: CodeStarSourceConnection
+              OutputArtifacts:
+                - Name: SourceCode
+              Name: Source
+              Configuration:
+                ConnectionArn: "{{resolve:ssm:/edgarp-dev/github-connection:1}}"
+                FullRepositoryId: "edgarp-dev/bug-sales-bot"
+                BranchName: !Ref Branch
+                OutputArtifactFormat: "CODE_ZIP"
+              RunOrder: 1
+
+        - Name: Validate
+          Actions:
+            - InputArtifacts:
+                - Name: SourceCode
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              Name: Bug-Sales-Processor-Lambda-Sanity
+              Configuration:
+                ProjectName: !GetAtt BugSalesProcessorLambdaSanity.Outputs.CodeBuildProjectName
+              RunOrder: 2
+        
+        - Name: Deploy
+          Actions:
+            - InputArtifacts:
+                - Name: SourceCode
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              Name: Bug-Sales-Processor-Lambda-Deploy
+              Configuration:
+                ProjectName: !GetAtt BugSalesProcessorLambdaDeploy.Outputs.CodeBuildProjectName
+              RunOrder: 3
+
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub bug-sales-bot-pipeline-role-${Env}
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "codepipeline.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub bug-sales-bot-codepipeline-role-${Env}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "codebuild:BatchGetBuilds"
+                  - "codebuild:StartBuild"
+                  - "cloudwatch:*"
+                  - "cloudformation:*"
+                  - "s3:*"
+                  - "iam:PassRole"
+                  - "codestar-connections:UseConnection"
+                Resource: "*"
+
+  BugSalesProcessorLambdaSanity:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yml
+      TimeoutInMinutes: 10
+      Parameters:
+        Name: !Sub bug-sales-processor-lambda-sanity-${Env}
+        BuildSpec: buildspec/bug-sales-processor-lambda-sanity.yml
+        Env: !Ref Env
+  
+  BugSalesProcessorLambdaDeploy:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yml
+      TimeoutInMinutes: 10
+      Parameters:
+        Name: !Sub bug-sales-processor-lambda-deploy-${Env}
+        BuildSpec: buildspec/bug-sales-processor-lambda-deploy.yml
+        Env: !Ref Env
+        ArtifactsBucket: !Ref ArtifactsBucket
