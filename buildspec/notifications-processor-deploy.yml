@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+    install:
+        runtime-versions:
+            nodejs: 18.x
+        commands:
+            - npm install -g yarn
+            - cd notifications-processor/src
+            - yarn install
+            - cd ..
+    build:
+        commands:
+            - ./deploy.sh -e $ENV -b $ARTIFACTS_BUCKET
