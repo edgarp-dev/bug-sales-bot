@@ -82,6 +82,6 @@ sam package --s3-bucket $ARTIFACTS_BUCKET \
 
 echo "Deploying notifications-processor-$ENV"
 sam deploy --template-file output.yml \
-    --stack-name notifications-processor-$ENV \
+    --stack-name bug-sales-notifications-processor-$ENV \
     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --parameter-overrides "Env=$ENV"
