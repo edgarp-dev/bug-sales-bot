@@ -80,6 +80,18 @@ Resources:
                         Configuration:
                             ProjectName: !GetAtt BugSalesProcessorLambdaDeploy.Outputs.CodeBuildProjectName
                         RunOrder: 3
+                    
+                    - InputArtifacts:
+                            - Name: SourceCode
+                        ActionTypeId:
+                            Category: Build
+                            Owner: AWS
+                            Version: "1"
+                            Provider: CodeBuild
+                        Name: Notifications-Processor-Deploy
+                        Configuration:
+                            ProjectName: !GetAtt NotificationsProcessorDeploy.Outputs.CodeBuildProjectName
+                        RunOrder: 3
 
     CodePipelineRole:
         Type: AWS::IAM::Role
@@ -136,5 +148,16 @@ Resources:
             Parameters:
                 Name: !Sub bug-sales-processor-lambda-deploy-${Env}
                 BuildSpec: buildspec/bug-sales-processor-lambda-deploy.yml
+                Env: !Ref Env
+                ArtifactsBucket: !Ref ArtifactsBucket
+
+    NotificationsProcessorDeploy:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yml
+            TimeoutInMinutes: 10
+            Parameters:
+                Name: !Sub notifications-processor-deploy-${Env}
+                BuildSpec: buildspec/notifications-processor-deploy.yml
                 Env: !Ref Env
                 ArtifactsBucket: !Ref ArtifactsBucket
