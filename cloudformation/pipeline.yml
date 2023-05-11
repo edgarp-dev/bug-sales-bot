@@ -81,8 +81,8 @@ Resources:
                             ProjectName: !GetAtt BugSalesProcessorLambdaDeploy.Outputs.CodeBuildProjectName
                         RunOrder: 3
                     
-                    - InputArtifacts:
-                            - Name: SourceCode
+                      - InputArtifacts:
+                              - Name: SourceCode
                         ActionTypeId:
                             Category: Build
                             Owner: AWS
