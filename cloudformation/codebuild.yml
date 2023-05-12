@@ -74,6 +74,7 @@ Resources:
                                 - "dynamodb:*"
                                 - "apigateway:*"
                                 - "ssm:*"
+                                - "sns:*"
                             Resource: "*"
                   PolicyName: !Sub ${Name}-codebuild-policy
 
