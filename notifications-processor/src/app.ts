@@ -5,7 +5,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<any> =
     try {
         console.log(event);
 
-        const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+        const telegramBotToken = `bot${process.env.TELEGRAM_BOT_TOKEN}`;
         const telegramPostUrl = `https://api.telegram.org/${telegramBotToken}/sendMessage`;
 
         await axios.post(telegramPostUrl, {
