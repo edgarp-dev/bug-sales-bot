@@ -71,17 +71,17 @@ S3_PREFIX="bug-sales-processor-artifacts-$ENV"
 echo "Selected env: $ENV"
 echo "Artifacts bucket: $ARTIFACTS_BUCKET/bug-sales-processor-artifacts-$ENV"
 
-echo "Building bug-sales-processor-$ENV lambda"
+echo "Building bug-sales-processor-$ENV "
 sam build --template-file ./cloudformation/template.yml --base-dir ./
 
-echo "Uploading bug-sales-processor$ENV lambda artifacts"
+echo "Uploading bug-sales-processor$ENV artifacts"
 sam package --s3-bucket $ARTIFACTS_BUCKET \
     --s3-prefix $S3_PREFIX \
     --output-template-file output.yml \
     --region $AWS_REGION
 
-echo "Deploying bug-sales-processor lambda$ENV"
+echo "Deploying bug-sales-processor $ENV"
 sam deploy --template-file output.yml \
-    --stack-name bug-sales-processor-lambda-$ENV \
+    --stack-name bug-sales-processor-$ENV \
     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --parameter-overrides "Env=$ENV"

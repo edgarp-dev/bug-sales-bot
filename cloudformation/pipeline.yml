@@ -67,22 +67,10 @@ Resources:
                             ProjectName: !GetAtt NotificationsProcessorSanity.Outputs.CodeBuildProjectName
                         RunOrder: 2
 
-                - Name: Deploy
+                - Name: Deploy-Notitfications-Processor
                   Actions:
                       - InputArtifacts:
                             - Name: SourceCode
-                        ActionTypeId:
-                            Category: Build
-                            Owner: AWS
-                            Version: "1"
-                            Provider: CodeBuild
-                        Name: Bug-Sales-Processor-Lambda-Deploy
-                        Configuration:
-                            ProjectName: !GetAtt BugSalesProcessorLambdaDeploy.Outputs.CodeBuildProjectName
-                        RunOrder: 3
-                    
-                      - InputArtifacts:
-                              - Name: SourceCode
                         ActionTypeId:
                             Category: Build
                             Owner: AWS
@@ -92,6 +80,20 @@ Resources:
                         Configuration:
                             ProjectName: !GetAtt NotificationsProcessorDeploy.Outputs.CodeBuildProjectName
                         RunOrder: 3
+
+                - Name: Deploy-Bug-Sales-Processor
+                  Actions:
+                      - InputArtifacts:
+                            - Name: SourceCode
+                        ActionTypeId:
+                            Category: Build
+                            Owner: AWS
+                            Version: "1"
+                            Provider: CodeBuild
+                        Name: Bug-Sales-Processor-Deploy
+                        Configuration:
+                            ProjectName: !GetAtt BugSalesProcessorLambdaDeploy.Outputs.CodeBuildProjectName
+                        RunOrder: 4
 
     CodePipelineRole:
         Type: AWS::IAM::Role
