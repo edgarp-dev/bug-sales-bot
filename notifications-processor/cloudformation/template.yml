@@ -8,9 +8,10 @@ Parameters:
         Type: String
 
 Resources:
-    NotificationProcessorLambda:
+    NotificationsProcessorLambda:
         Type: AWS::Serverless::Function
         Properties:
+            FunctionName: !Sub bug-sales-notifications-processor-${Env}
             CodeUri: src/
             Handler: app.lambdaHandler
             Runtime: nodejs18.x
@@ -21,6 +22,7 @@ Resources:
             Environment:
                 Variables:
                     TELEGRAM_BOT_TOKEN: !Sub "{{resolve:ssm:/bug-sales-bot/${Env}/telegram-token:1}}"
+                    ENV: !Ref Env
         Metadata:
             BuildMethod: esbuild
             BuildProperties:
@@ -35,13 +37,13 @@ Resources:
         Properties:
             Subscription:
                 - Protocol: lambda
-                  Endpoint: !GetAtt NotificationProcessorLambda.Arn
+                  Endpoint: !GetAtt NotificationsProcessorLambda.Arn
 
-    NotificationProcessorLambdaPermission:
+    NotificationsProcessorLambdaPermission:
         Type: AWS::Lambda::Permission
         Properties:
             Action: "lambda:InvokeFunction"
-            FunctionName: !Ref NotificationProcessorLambda
+            FunctionName: !Ref NotificationsProcessorLambda
             Principal: sns.amazonaws.com
 
     NotificationsTopicSSMParameter:
