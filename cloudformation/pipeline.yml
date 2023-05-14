@@ -67,7 +67,7 @@ Resources:
                             ProjectName: !GetAtt NotificationsProcessorSanity.Outputs.CodeBuildProjectName
                         RunOrder: 2
 
-                - Name: Deploy-Notitfications-Proccesor
+                - Name: Deploy-Notitfications-Processor
                   Actions:
                       - InputArtifacts:
                             - Name: SourceCode
