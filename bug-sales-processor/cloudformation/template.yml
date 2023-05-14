@@ -45,6 +45,10 @@ Resources:
                                 - "dynamodb:Query"
                                 - "dynamodb:Scan"
                             Resource: !GetAtt BugSalesDB.Arn
+                          - Effect: Allow
+                            Action:
+                                - "sns:Publish"
+                            Resource: !Sub "{{resolve:ssm:bug-sales-bot-notifications-processor-sns-topic-arn-${Env}:1}}"
 
     # LAMBDA
     BugSalesProcessorLambda:
