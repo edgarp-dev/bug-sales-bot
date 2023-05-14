@@ -18,6 +18,9 @@ Resources:
             Timeout: 30
             Architectures:
                 - x86_64
+            Environment:
+                Variables:
+                    TELEGRAM_BOT_TOKEN: !Sub "{{resolve:ssm:/bug-sales-bot/${Env}/telegram-token:1}}"
         Metadata:
             BuildMethod: esbuild
             BuildProperties:

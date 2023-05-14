@@ -4,9 +4,13 @@ import axios from 'axios';
 export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<any> => {
     try {
         console.log(event);
-        await axios.post('https://api.telegram.org/bot5848018748:AAEwAb31VJWc0e9GiAZONi4aVYrdkABdEeE/sendMessage', {
+
+        const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+        const telegramPostUrl = `https://api.telegram.org/${telegramBotToken}/sendMessage`;
+
+        await axios.post(telegramPostUrl, {
             chat_id: '@promobugsdev',
-            text: 'Test message',
+            text: `Test message at ${Date.now()}`,
         });
     } catch (err) {
         console.log(err);
