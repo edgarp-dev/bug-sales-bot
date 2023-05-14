@@ -6,7 +6,7 @@ phases:
             nodejs: 18.x
         commands:
             - npm install -g yarn
-            - cd bug-sales-processor/src
+            - cd notifications-processor/src
             - yarn install
             - cd ..
     build:

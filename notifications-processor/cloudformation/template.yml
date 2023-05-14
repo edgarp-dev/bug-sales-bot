@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+    notifications-processor infrastructure resources
+
+Parameters:
+    Env:
+        Type: String
+
+Resources:
+    NotificationsProcessorLambda:
+        Type: AWS::Serverless::Function
+        Properties:
+            FunctionName: !Sub bug-sales-notifications-processor-${Env}
+            CodeUri: src/
+            Handler: app.lambdaHandler
+            Runtime: nodejs18.x
+            MemorySize: 128
+            Timeout: 30
+            Architectures:
+                - x86_64
+            Environment:
+                Variables:
+                    TELEGRAM_BOT_TOKEN: !Sub "{{resolve:ssm:/bug-sales-bot/${Env}/telegram-token:1}}"
+                    ENV: !Ref Env
+        Metadata:
+            BuildMethod: esbuild
+            BuildProperties:
+                Minify: true
+                Target: "es2020"
+                Sourcemap: true
+                EntryPoints:
+                    - app.ts
+
+    NotificationsSNSTopic:
+        Type: AWS::SNS::Topic
+        Properties:
+            Subscription:
+                - Protocol: lambda
+                  Endpoint: !GetAtt NotificationsProcessorLambda.Arn
+
+    NotificationsProcessorLambdaPermission:
+        Type: AWS::Lambda::Permission
+        Properties:
+            Action: "lambda:InvokeFunction"
+            FunctionName: !Ref NotificationsProcessorLambda
+            Principal: sns.amazonaws.com
+
+    NotificationsTopicSSMParameter:
+        Type: AWS::SSM::Parameter
+        Properties:
+            DataType: text
+            Name: !Sub "bug-sales-bot-notifications-processor-sns-topic-${Env}"
+            Tier: Standard
+            Type: String
+            Value: !GetAtt NotificationsSNSTopic.TopicName
