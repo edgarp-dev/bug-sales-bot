@@ -53,4 +53,4 @@ Resources:
             Name: !Sub "bug-sales-bot-notifications-processor-sns-topic-${Env}"
             Tier: Standard
             Type: String
-            Value: !GetAtt NotificationsSNSTopic.TopicName
+            Value: !GetAtt NotificationsSNSTopic.TopicArn

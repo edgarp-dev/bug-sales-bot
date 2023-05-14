@@ -5,6 +5,7 @@ import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
         console.log('------->' + event.body);
+        console.log('------->' + process.env.NOTIFICATIONS_SNS_TOPIC);
 
         const awsRegion = process.env.AWS_REGION;
         const snsClient = new SNSClient({ region: awsRegion });
