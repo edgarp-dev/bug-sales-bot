@@ -62,7 +62,7 @@ Resources:
             Environment:
                 Variables:
                     BUG_SALES_DB_NAME: !Ref BugSalesDB
-                    NOTIFICATIONS_SNS_TOPIC: !Sub "{{resolve:ssm:bug-sales-bot-notifications-processor-sns-topic-${Env}:1}}"
+                    NOTIFICATIONS_SNS_TOPIC_ARN: !Sub "{{resolve:ssm:bug-sales-bot-notifications-processor-sns-topic-arn-${Env}:1}}"
             Events:
                 HttpPost:
                     Type: Api
