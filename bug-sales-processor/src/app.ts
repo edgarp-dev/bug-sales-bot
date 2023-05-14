@@ -1,11 +1,20 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
 export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
-        const dbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
         console.log('------->' + event.body);
 
+        const awsRegion = process.env.AWS_REGION;
+        const snsClient = new SNSClient({ region: awsRegion });
+        const snsPublishCommand = new PublishCommand({
+            TopicArn: process.env.NOTIFICATIONS_SNS_TOPIC,
+            Message: 'Test message from lambda',
+        });
+        await snsClient.send(snsPublishCommand);
+
+        const dbClient = new DynamoDBClient({ region: awsRegion });
         const params = {
             TableName: process.env.BUG_SALES_DB_NAME,
             Item: {
@@ -20,7 +29,6 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
                 },
             },
         };
-
         await dbClient.send(new PutItemCommand(params));
 
         return {
