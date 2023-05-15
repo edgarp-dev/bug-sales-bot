@@ -73,7 +73,7 @@ Resources:
                     Properties:
                         Path: "/sales"
                         Method: post
-                        RestApiId: !Ref BuSalesProcessorApi
+                        RestApiId: !Ref BugSalesProcessorApi
         Metadata:
             BuildMethod: esbuild
             BuildProperties:
@@ -84,11 +84,11 @@ Resources:
                     - app.ts
 
     # API GATEWAY
-    BuSalesProcessorApi:
+    BugSalesProcessorApi:
         Type: AWS::Serverless::Api
         Properties:
             StageName: !Ref Env
-            ApiAuth:
+            Auth:
                 ApiKeyRequired: true
 
     # DYNAMO DB
@@ -106,5 +106,5 @@ Resources:
 
 Outputs:
     HelloWorldApi:
-        Description: "BuSalesProcessorApi endpoint URL"
-        Value: !Sub "https://${BuSalesProcessorApi}.execute-api.${AWS::Region}.amazonaws.com/${Env}/sales/"
+        Description: "BugSalesProcessorApi endpoint URL"
+        Value: !Sub "https://${BugSalesProcessorApi}.execute-api.${AWS::Region}.amazonaws.com/${Env}/sales/"
