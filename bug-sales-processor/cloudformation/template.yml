@@ -88,6 +88,8 @@ Resources:
         Type: AWS::Serverless::Api
         Properties:
             StageName: !Ref Env
+            ApiAuth:
+                ApiKeyRequired: true
 
     # DYNAMO DB
     BugSalesDB:
