@@ -105,27 +105,17 @@ Resources:
             BillingMode: PAY_PER_REQUEST
 
     # IAM
-    BugSalesProcessorApiRole:
-        Type: AWS::IAM::Role
+    MyInvokeApiPolicy:
+        Type: AWS::IAM::ManagedPolicy
         Properties:
-            RoleName: !Sub bug-sales-processor-api-call-rol-${Env}
-            AssumeRolePolicyDocument:
+            ManagedPolicyName: !Sub bug-sales-processor-api-invoke-policy-${Env}
+            Description: Policy that allows a user to invoke the API
+            PolicyDocument:
                 Version: "2012-10-17"
                 Statement:
-                    - Effect: Allow
-                      Principal:
-                          Service:
-                              - lambda.amazonaws.com
-                      Action:
-                          - "sts:AssumeRole"
-            Policies:
-                - PolicyName: InvokeApiPolicy
-                  PolicyDocument:
-                      Version: "2012-10-17"
-                      Statement:
-                          - Effect: Allow
-                            Action: "execute-api:Invoke"
-                            Resource: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BugSalesProcessorApi}/*"
+                - Effect: Allow
+                  Action: "execute-api:Invoke"
+                  Resource: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BugSalesProcessorApi}/*'
 
 Outputs:
     HelloWorldApi:
