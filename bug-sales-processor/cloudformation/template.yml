@@ -93,7 +93,7 @@ Resources:
 
     # DYNAMO DB
     BugSalesDB:
-        Type: "AWS::DynamoDB::Table"
+        Type: AWS::DynamoDB::Table
         Properties:
             TableName: !Sub bug-sales-db-${Env}
             AttributeDefinitions:
@@ -103,6 +103,29 @@ Resources:
                 - AttributeName: id
                   KeyType: HASH
             BillingMode: PAY_PER_REQUEST
+
+    # IAM
+    BugSalesProcessorApiRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: !Sub bug-sales-processor-api-call-rol-${Env}
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service:
+                              - lambda.amazonaws.com
+                      Action:
+                          - "sts:AssumeRole"
+            Policies:
+                - PolicyName: InvokeApiPolicy
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action: "execute-api:Invoke"
+                            Resource: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BugSalesProcessorApi}/*"
 
 Outputs:
     HelloWorldApi:
