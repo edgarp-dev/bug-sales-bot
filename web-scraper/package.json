@@ -15,6 +15,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/aws-api-gateway-client": "^0.3.0",
     "@types/node": "^18.15.11",
     "@types/node-cron": "^3.0.7",
     "@typescript-eslint/eslint-plugin": "^5.59.0",
@@ -29,7 +30,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "axios": "^1.4.0",
+    "aws-api-gateway-client": "^0.3.7",
     "dotenv": "^16.0.3",
     "node-cron": "^3.0.2"
   }
