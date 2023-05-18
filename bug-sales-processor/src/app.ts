@@ -6,7 +6,8 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
     try {
         const awsRegion = process.env.AWS_REGION;
         console.log(event);
-        console.log('----->BODY NO PARSED' + event.body);
+        const testParsed = JSON.parse(JSON.parse(event.body as string));
+        console.log('----->BODY TEST PARSED' + testParsed);
         const requestBody = JSON.parse(event.body ?? '');
         console.log('----> TYPE' + typeof requestBody);
         const { sendNotification } = requestBody;
