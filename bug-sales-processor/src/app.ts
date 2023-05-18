@@ -10,7 +10,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         const requestBody = JSON.parse(event.body ?? '');
         const { sendNotification } = requestBody;
         console.log('------> BODY', requestBody);
-        console.log('------> BODY SEND NOTIFICATION', requestBody.sendNotification);
+        console.log('------> BODY SEND NOTIFICATION', requestBody['sendNotification']);
         console.log('------> Send notification: ' + sendNotification);
 
         if (sendNotification) {
