@@ -88,8 +88,8 @@ Resources:
         Type: AWS::Serverless::Api
         Properties:
             StageName: !Ref Env
-            # Auth:
-            #     DefaultAuthorizer: AWS_IAM
+            Auth:
+                DefaultAuthorizer: AWS_IAM
 
     # DYNAMO DB
     BugSalesDB:
