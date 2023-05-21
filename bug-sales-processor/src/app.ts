@@ -5,10 +5,12 @@ import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
         const awsRegion = process.env.AWS_REGION;
+        let requestBody = JSON.parse(event.body ?? '');
 
-        const requestBody = JSON.parse(event.body ?? '');
+        if (typeof requestBody === 'string') {
+            requestBody = JSON.parse(requestBody);
+        }
         const { sendNotification } = requestBody;
-        console.log('Send notification: ' + sendNotification);
 
         if (sendNotification) {
             const snsClient = new SNSClient({ region: awsRegion });
