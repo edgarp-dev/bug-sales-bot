@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import puppeteer from 'puppeteer';
+import puppeteer, { PuppeteerLaunchOptions } from 'puppeteer';
 import apiGatewayFactory from 'aws-api-gateway-client';
 
 // const sendMessage = async () => {
@@ -27,7 +27,17 @@ import apiGatewayFactory from 'aws-api-gateway-client';
 // };
 
 async function scrapBugSalesWithQuery(queryParam: string) {
-  const browser = await puppeteer.launch({ headless: 'new' });
+  const puppeteerConfig: PuppeteerLaunchOptions = {
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  };
+
+  const isLocalhost = process.env.LOCALHOST;
+  if (!isLocalhost) {
+    puppeteerConfig.executablePath = '/usr/bin/chromium-browser';
+  }
+
+  const browser = await puppeteer.launch(puppeteerConfig);
   const page = await browser.newPage();
   await page.setViewport({
     height: 1920,
@@ -97,11 +107,13 @@ async function requestBugSales() {
     })
     .then((searchResults) => {
       return searchResults.filter((result) => !result.isExpired);
-    });
+    })
+    .catch((error) => console.log(error));
 
   console.log(results);
 }
 
 cron.schedule('* * * * *', async () => {
+  console.log('Requesting sales bug');
   await requestBugSales();
 });
