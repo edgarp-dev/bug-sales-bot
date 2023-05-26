@@ -55,6 +55,11 @@ async function scrapBugSalesWithQuery(queryParam: string) {
   for (const article of articles) {
     const linkElement = await article.$('.thread-title a');
 
+    const id = await page.evaluate(
+      (element) => element.getAttribute('id'),
+      article
+    );
+
     const title = await page.evaluate(
       (element) => element.textContent,
       linkElement
@@ -79,6 +84,7 @@ async function scrapBugSalesWithQuery(queryParam: string) {
     );
 
     sales.push({
+      id,
       title,
       url: href,
       imageUrl,
