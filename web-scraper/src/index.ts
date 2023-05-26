@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import puppeteer, { PuppeteerLaunchOptions } from 'puppeteer';
 import apiGatewayFactory from 'aws-api-gateway-client';
+import { v4 as uuidv4 } from 'uuid';
 
 // const sendMessage = async () => {
 //   try {
@@ -55,6 +56,12 @@ async function scrapBugSalesWithQuery(queryParam: string) {
   for (const article of articles) {
     const linkElement = await article.$('.thread-title a');
 
+    const id = await page.evaluate(
+      (element) => element.getAttribute('id'),
+      article
+    );
+    console.log(id);
+
     const title = await page.evaluate(
       (element) => element.textContent,
       linkElement
@@ -79,6 +86,7 @@ async function scrapBugSalesWithQuery(queryParam: string) {
     );
 
     sales.push({
+      id,
       title,
       url: href,
       imageUrl,
@@ -113,7 +121,9 @@ async function requestBugSales() {
   console.log(results);
 }
 
-cron.schedule('* * * * *', async () => {
-  console.log('Requesting sales bug');
-  await requestBugSales();
-});
+requestBugSales();
+
+// cron.schedule('* * * * *', async () => {
+//   console.log('Requesting sales bug');
+//   await requestBugSales();
+// });
