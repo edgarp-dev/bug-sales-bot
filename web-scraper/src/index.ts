@@ -59,7 +59,6 @@ async function scrapBugSalesWithQuery(queryParam: string) {
       (element) => element.getAttribute('id'),
       article
     );
-    console.log(id);
 
     const title = await page.evaluate(
       (element) => element.textContent,
