@@ -1,6 +1,9 @@
-FROM node:18.15.0
+FROM node:18.15.0-alpine
 
-FROM node:lts-alpine
+RUN apk add chromium
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 WORKDIR /usr/src/app
 
