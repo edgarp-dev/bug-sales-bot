@@ -1,7 +1,6 @@
 import cron from 'node-cron';
 import puppeteer, { PuppeteerLaunchOptions } from 'puppeteer';
 import apiGatewayFactory from 'aws-api-gateway-client';
-import { v4 as uuidv4 } from 'uuid';
 
 // const sendMessage = async () => {
 //   try {
@@ -121,9 +120,7 @@ async function requestBugSales() {
   console.log(results);
 }
 
-requestBugSales();
-
-// cron.schedule('* * * * *', async () => {
-//   console.log('Requesting sales bug');
-//   await requestBugSales();
-// });
+cron.schedule('* * * * *', async () => {
+  console.log('Requesting sales bug');
+  await requestBugSales();
+});
