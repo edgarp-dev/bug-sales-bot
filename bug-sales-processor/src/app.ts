@@ -9,6 +9,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
 
         if (typeof requestBody === 'string') {
             requestBody = JSON.parse(requestBody);
+            console.log(requestBody);
         }
         const { sendNotification } = requestBody;
 
@@ -41,7 +42,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         return {
             statusCode: 200,
             body: JSON.stringify({
-                message: 'hello world',
+                message: 'Bug sales processed',
             }),
         };
     } catch (err) {

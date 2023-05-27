@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'bug-sales-processor
+
+  Lambda the handle bug sales process
+
+  '
+Parameters:
+  Env:
+    Type: String
+    AllowedValues:
+    - dev
+    - prod
+Resources:
+  BugSalesProcessorLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: bug-sales-processor-role-${Env}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName:
+          Fn::Sub: bug-sales-processor-policy-${Env}
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          - Effect: Allow
+            Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:DeleteItem
+            - dynamodb:UpdateItem
+            - dynamodb:Query
+            - dynamodb:Scan
+            Resource:
+              Fn::GetAtt:
+              - BugSalesDB
+              - Arn
+          - Effect: Allow
+            Action:
+            - sns:Publish
+            Resource:
+              Fn::Sub: '{{resolve:ssm:bug-sales-bot-notifications-processor-sns-topic-arn-${Env}:1}}'
+    Metadata:
+      SamResourceId: BugSalesProcessorLambdaRole
+  BugSalesProcessorLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: bug-sales-processor-${Env}
+      CodeUri: s3://bug-sales-artifacts-bucket-dev/bug-sales-processor-artifacts-dev/be4066ab411151d04fa4c71d08886419
+      Handler: app.lambdaHandler
+      Runtime: nodejs18.x
+      Architectures:
+      - x86_64
+      MemorySize: 128
+      Timeout: 30
+      Role:
+        Fn::GetAtt:
+        - BugSalesProcessorLambdaRole
+        - Arn
+      Environment:
+        Variables:
+          BUG_SALES_DB_NAME:
+            Ref: BugSalesDB
+          NOTIFICATIONS_SNS_TOPIC_ARN:
+            Fn::Sub: '{{resolve:ssm:bug-sales-bot-notifications-processor-sns-topic-arn-${Env}:1}}'
+          NODE_OPTIONS: ' --enable-source-maps'
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            Path: /sales
+            Method: post
+            RestApiId:
+              Ref: BugSalesProcessorApi
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+        - app.ts
+        Minify: true
+        Sourcemap: true
+        Target: es2020
+      SamResourceId: BugSalesProcessorLambda
+  BugSalesProcessorApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName:
+        Ref: Env
+      Auth:
+        DefaultAuthorizer: AWS_IAM
+    Metadata:
+      SamResourceId: BugSalesProcessorApi
+  BugSalesDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: bug-sales-db-${Env}
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+    Metadata:
+      SamResourceId: BugSalesDB
+  BugSalesProcessorApiInvokePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName:
+        Fn::Sub: bug-sales-processor-api-invoke-policy-${Env}
+      Description: Policy that allows a user to invoke the API
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: execute-api:Invoke
+          Resource:
+            Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BugSalesProcessorApi}/*
+    Metadata:
+      SamResourceId: BugSalesProcessorApiInvokePolicy
+Outputs:
+  HelloWorldApi:
+    Description: BugSalesProcessorApi endpoint URL
+    Value:
+      Fn::Sub: https://${BugSalesProcessorApi}.execute-api.${AWS::Region}.amazonaws.com/${Env}/sales/
