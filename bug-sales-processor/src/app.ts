@@ -37,7 +37,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
                 const snsClient = new SNSClient({ region: awsRegion });
                 const snsPublishCommand = new PublishCommand({
                     TopicArn: process.env.NOTIFICATIONS_SNS_TOPIC_ARN,
-                    Message: `notiication_${id}`,
+                    Message: `notification_${id}`,
                     MessageAttributes: {
                         title: {
                             DataType: 'String',
