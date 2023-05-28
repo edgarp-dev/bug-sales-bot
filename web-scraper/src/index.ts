@@ -14,8 +14,7 @@ const postBugSales = async (bugSales: Record<string, any>) => {
     };
 
     const requestBody = JSON.stringify({
-      bugSales,
-      sendNotification: true
+      bugSales
     });
 
     const apiGatewayClient = apiGatewayFactory.newClient(config);
@@ -47,11 +46,6 @@ async function scrapBugSalesWithQuery(
 
   const browser = await puppeteer.launch(puppeteerConfig);
   const page = await browser.newPage();
-  await page.setViewport({
-    height: 1920,
-    width: 1080,
-    deviceScaleFactor: 1
-  });
 
   const url = `https://www.promodescuentos.com/search?q=${queryParam}`;
 
@@ -126,6 +120,17 @@ async function requestBugSales(): Promise<Record<string, any> | undefined> {
 
   return results ?? undefined;
 }
+
+// Uncomment to test locally and comment the cron schedule expression
+// (async () => {
+//   console.log('Requesting sales bug');
+//   const bugSales = await requestBugSales();
+
+//   if (bugSales) {
+//     console.log('POST to bug sales processor API');
+//     await postBugSales(bugSales);
+//   }
+// })();
 
 cron.schedule('* * * * *', async () => {
   console.log('Requesting sales bug');
