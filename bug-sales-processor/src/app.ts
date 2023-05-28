@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
 export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -10,38 +10,81 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         if (typeof requestBody === 'string') {
             requestBody = JSON.parse(requestBody);
         }
-        const { sendNotification } = requestBody;
 
-        if (sendNotification) {
-            const snsClient = new SNSClient({ region: awsRegion });
-            const snsPublishCommand = new PublishCommand({
-                TopicArn: process.env.NOTIFICATIONS_SNS_TOPIC_ARN,
-                Message: 'Test message from lambda',
-            });
-            await snsClient.send(snsPublishCommand);
-        }
+        const { bugSales = [] } = requestBody;
 
         const dbClient = new DynamoDBClient({ region: awsRegion });
-        const params = {
-            TableName: process.env.BUG_SALES_DB_NAME,
-            Item: {
-                id: {
-                    S: Math.random().toString(16).slice(2),
-                },
-                name: {
-                    S: 'Test name',
-                },
-                body: {
-                    S: 'Test body',
-                },
-            },
-        };
-        await dbClient.send(new PutItemCommand(params));
+
+        for await (const bugSale of bugSales) {
+            const { id, title, url, imageUrl } = bugSale;
+
+            const bugSalesDBName = process.env.BUG_SALES_DB_NAME;
+
+            const getItemResponse = await dbClient.send(
+                new GetItemCommand({
+                    TableName: bugSalesDBName,
+                    Key: {
+                        id: {
+                            S: id,
+                        },
+                    },
+                }),
+            );
+
+            const bugSaleAlreadyNotified = getItemResponse.Item;
+
+            if (!bugSaleAlreadyNotified) {
+                const snsClient = new SNSClient({ region: awsRegion });
+                const snsPublishCommand = new PublishCommand({
+                    TopicArn: process.env.NOTIFICATIONS_SNS_TOPIC_ARN,
+                    Message: `notification_${id}`,
+                    MessageAttributes: {
+                        title: {
+                            DataType: 'String',
+                            StringValue: title,
+                        },
+                        url: {
+                            DataType: 'String',
+                            StringValue: url,
+                        },
+                        imageUrl: {
+                            DataType: 'String',
+                            StringValue: imageUrl,
+                        },
+                    },
+                });
+
+                await snsClient.send(snsPublishCommand);
+
+                const params = {
+                    TableName: process.env.BUG_SALES_DB_NAME,
+                    Item: {
+                        id: {
+                            S: id,
+                        },
+                        title: {
+                            S: title,
+                        },
+                        url: {
+                            S: url,
+                        },
+                        imageUrl: {
+                            S: imageUrl,
+                        },
+                        notificationSent: {
+                            BOOL: true,
+                        },
+                    },
+                };
+
+                await dbClient.send(new PutItemCommand(params));
+            }
+        }
 
         return {
             statusCode: 200,
             body: JSON.stringify({
-                message: 'hello world',
+                message: 'Bug sales processed',
             }),
         };
     } catch (err) {
@@ -49,7 +92,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         return {
             statusCode: 500,
             body: JSON.stringify({
-                message: 'some error happened',
+                message: 'Error handling request',
             }),
         };
     }

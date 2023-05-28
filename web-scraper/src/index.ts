@@ -2,48 +2,50 @@ import cron from 'node-cron';
 import puppeteer, { PuppeteerLaunchOptions } from 'puppeteer';
 import apiGatewayFactory from 'aws-api-gateway-client';
 
-// const sendMessage = async () => {
-//   try {
-//     const config = {
-//       invokeUrl: 'https://eab1jsxs3g.execute-api.us-east-1.amazonaws.com',
-//       region: process.env.AWS_REGION,
-//       accessKey: process.env.AWS_ACCESS_KEY_ID,
-//       secretKey: process.env.AWS_SECRET_ACCESS_KEY
-//     };
+const isLocalhost = process.env.LOCALHOST;
 
-//     const apiGatewayClient = apiGatewayFactory.newClient(config);
-//     const response = await apiGatewayClient.invokeApi(
-//       {},
-//       '/dev/sales',
-//       'POST',
-//       undefined,
-//       JSON.stringify({ sendNotification: true })
-//     );
+const postBugSales = async (bugSales: Record<string, any>) => {
+  try {
+    const config = {
+      invokeUrl: 'https://eab1jsxs3g.execute-api.us-east-1.amazonaws.com',
+      region: process.env.AWS_REGION,
+      accessKey: process.env.AWS_ACCESS_KEY_ID,
+      secretKey: process.env.AWS_SECRET_ACCESS_KEY
+    };
 
-//     console.log(response);
-//   } catch (error: any) {
-//     console.log(error.message);
-//   }
-// };
+    const requestBody = JSON.stringify({
+      bugSales
+    });
 
-async function scrapBugSalesWithQuery(queryParam: string) {
+    const apiGatewayClient = apiGatewayFactory.newClient(config);
+    const response = await apiGatewayClient.invokeApi(
+      {},
+      '/dev/sales',
+      'POST',
+      undefined,
+      requestBody
+    );
+
+    console.log(response);
+  } catch (error: any) {
+    console.log(error.message);
+  }
+};
+
+async function scrapBugSalesWithQuery(
+  queryParam: string
+): Promise<Record<string, any>> {
   const puppeteerConfig: PuppeteerLaunchOptions = {
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   };
 
-  const isLocalhost = process.env.LOCALHOST;
   if (!isLocalhost) {
     puppeteerConfig.executablePath = '/usr/bin/chromium-browser';
   }
 
   const browser = await puppeteer.launch(puppeteerConfig);
   const page = await browser.newPage();
-  await page.setViewport({
-    height: 1920,
-    width: 1080,
-    deviceScaleFactor: 1
-  });
 
   const url = `https://www.promodescuentos.com/search?q=${queryParam}`;
 
@@ -97,7 +99,7 @@ async function scrapBugSalesWithQuery(queryParam: string) {
   return sales;
 }
 
-async function requestBugSales() {
+async function requestBugSales(): Promise<Record<string, any> | undefined> {
   const results = await Promise.all([
     scrapBugSalesWithQuery('bug'),
     scrapBugSalesWithQuery('error')
@@ -116,10 +118,26 @@ async function requestBugSales() {
     })
     .catch((error) => console.log(error));
 
-  console.log(results);
+  return results ?? undefined;
 }
+
+// Uncomment to test locally and comment the cron schedule expression
+// (async () => {
+//   console.log('Requesting sales bug');
+//   const bugSales = await requestBugSales();
+
+//   if (bugSales) {
+//     console.log('POST to bug sales processor API');
+//     await postBugSales(bugSales);
+//   }
+// })();
 
 cron.schedule('* * * * *', async () => {
   console.log('Requesting sales bug');
-  await requestBugSales();
+  const bugSales = await requestBugSales();
+
+  if (bugSales) {
+    console.log('POST to bug sales processor API');
+    await postBugSales(bugSales);
+  }
 });
