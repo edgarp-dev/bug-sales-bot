@@ -32,6 +32,7 @@
   "dependencies": {
     "aws-api-gateway-client": "^0.3.7",
     "dotenv": "^16.0.3",
+    "node-cache": "^5.1.2",
     "node-cron": "^3.0.2",
     "puppeteer": "^20.3.0"
   }
