@@ -1,6 +1,9 @@
 import cron from 'node-cron';
 import puppeteer, { PuppeteerLaunchOptions } from 'puppeteer';
 import apiGatewayFactory from 'aws-api-gateway-client';
+import NodeCache from 'node-cache';
+
+const localCache = new NodeCache();
 
 const isLocalhost = process.env.LOCALHOST;
 
@@ -34,7 +37,7 @@ const postBugSales = async (bugSales: Record<string, any>) => {
 
 async function scrapBugSalesWithQuery(
   queryParam: string
-): Promise<Record<string, any>> {
+): Promise<Record<string, any>[]> {
   const puppeteerConfig: PuppeteerLaunchOptions = {
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -53,7 +56,7 @@ async function scrapBugSalesWithQuery(
 
   const articles = await page.$$('article');
 
-  const sales: Record<string, any> = [];
+  const sales: Record<string, any>[] = [];
   for (const article of articles) {
     const linkElement = await article.$('.thread-title a');
 
@@ -99,7 +102,7 @@ async function scrapBugSalesWithQuery(
   return sales;
 }
 
-async function requestBugSales(): Promise<Record<string, any> | undefined> {
+async function requestBugSales(): Promise<Record<string, any>[] | undefined> {
   const results = await Promise.all([
     scrapBugSalesWithQuery('bug'),
     scrapBugSalesWithQuery('error')
@@ -121,14 +124,38 @@ async function requestBugSales(): Promise<Record<string, any> | undefined> {
   return results ?? undefined;
 }
 
+function verifyIfLocalCacheIsStale(bugSales: Record<string, any>) {
+  const itemsNotCached: Record<string, any>[] = bugSales.filter(
+    (bugSale: Record<string, any>) => !localCache.has(bugSale.id)
+  );
+  console.log(`length ${itemsNotCached.length}`);
+  return itemsNotCached.length > 0 ? true : false;
+}
+
+function updateLocaCache(bugSales: Record<string, any>[]) {
+  localCache.flushAll();
+
+  bugSales.forEach((bugSale: Record<string, any>) =>
+    localCache.set(bugSale.id, bugSale)
+  );
+}
+
 // Uncomment to test locally and comment the cron schedule expression
 // (async () => {
 //   console.log('Requesting sales bug');
 //   const bugSales = await requestBugSales();
 
 //   if (bugSales) {
-//     console.log('POST to bug sales processor API');
-//     await postBugSales(bugSales);
+//     const isLocalCacheStale = verifyIfLocalCacheIsStale(bugSales);
+//     console.log(localCache.keys());
+//     if (isLocalCacheStale) {
+//       console.log('POST to bug sales processor API');
+//       // await postBugSales(bugSales);
+//       console.log('Updating cache');
+//       updateLocaCache(bugSales);
+//     } else {
+//       console.log('Cache not stale, nothing to do');
+//     }
 //   }
 // })();
 
@@ -137,7 +164,15 @@ cron.schedule('* * * * *', async () => {
   const bugSales = await requestBugSales();
 
   if (bugSales) {
-    console.log('POST to bug sales processor API');
-    await postBugSales(bugSales);
+    const isLocalCacheStale = verifyIfLocalCacheIsStale(bugSales);
+    console.log(localCache.keys());
+    if (isLocalCacheStale) {
+      console.log('POST to bug sales processor API');
+      await postBugSales(bugSales);
+      console.log('Updating cache');
+      updateLocaCache(bugSales);
+    } else {
+      console.log('Cache not stale, nothing to do');
+    }
   }
 });
