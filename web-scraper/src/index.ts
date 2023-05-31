@@ -5,7 +5,7 @@ import NodeCache from 'node-cache';
 
 const localCache = new NodeCache();
 
-const isLocalhost = process.env.LOCALHOST;
+const isLocalhost = process.env.LOCALHOST === 'true';
 
 const postBugSales = async (bugSales: Record<string, any>) => {
   try {
@@ -128,7 +128,6 @@ function verifyIfLocalCacheIsStale(bugSales: Record<string, any>) {
   const itemsNotCached: Record<string, any>[] = bugSales.filter(
     (bugSale: Record<string, any>) => !localCache.has(bugSale.id)
   );
-  console.log(`length ${itemsNotCached.length}`);
   return itemsNotCached.length > 0 ? true : false;
 }
 
@@ -165,7 +164,7 @@ cron.schedule('* * * * *', async () => {
 
   if (bugSales) {
     const isLocalCacheStale = verifyIfLocalCacheIsStale(bugSales);
-    console.log(localCache.keys());
+
     if (isLocalCacheStale) {
       console.log('POST to bug sales processor API');
       await postBugSales(bugSales);
