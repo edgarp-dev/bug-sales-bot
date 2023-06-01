@@ -2,6 +2,14 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
+type BugSale = {
+    id: string;
+    title: string;
+    url: string;
+    imageUrl: string;
+    isExpired: boolean;
+};
+
 export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
         const awsRegion = process.env.AWS_REGION;
@@ -16,7 +24,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         const dbClient = new DynamoDBClient({ region: awsRegion });
 
         for await (const bugSale of bugSales) {
-            const { id, title, url, imageUrl } = bugSale;
+            const { id, title, url, imageUrl } = bugSale as BugSale;
 
             const bugSalesDBName = process.env.BUG_SALES_DB_NAME;
 
