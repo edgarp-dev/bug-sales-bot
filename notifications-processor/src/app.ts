@@ -1,7 +1,7 @@
 import { SNSEvent } from 'aws-lambda';
 import axios from 'axios';
 
-export const lambdaHandler = async (event: SNSEvent): Promise<any> => {
+export const lambdaHandler = async (event: SNSEvent): Promise<void> => {
     try {
         const telegramBotToken = `bot${process.env.TELEGRAM_BOT_TOKEN}`;
         const telegramPostUrl = `https://api.telegram.org/${telegramBotToken}/sendMessage`;
