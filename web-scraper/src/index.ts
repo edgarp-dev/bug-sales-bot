@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import puppeteer, { PuppeteerLaunchOptions } from 'puppeteer';
+import puppeteer, { PuppeteerLaunchOptions, Page } from 'puppeteer';
 import apiGatewayFactory from 'aws-api-gateway-client';
 import NodeCache from 'node-cache';
 
@@ -14,6 +14,24 @@ type BugSale = {
 const localCache = new NodeCache();
 
 const isLocalhost = process.env.LOCALHOST === 'true';
+
+// Uncomment to test locally and comment the cron schedule expression
+// (async () => {
+//   console.log('Requesting sales bug');
+//   const bugSales = await requestBugSales();
+//   console.log(bugSales);
+//   if (bugSales) {
+//     const isLocalCacheStale = verifyIfLocalCacheIsStale(bugSales);
+//     if (isLocalCacheStale) {
+//       console.log('POST to bug sales processor API');
+//       // await postBugSales(bugSales);
+//       console.log('Updating cache');
+//       updateLocaCache(bugSales);
+//     } else {
+//       console.log('Cache not stale, nothing to do');
+//     }
+//   }
+// })();
 
 cron.schedule('* * * * *', async () => {
   console.log('Requesting sales');
@@ -73,6 +91,9 @@ async function scrapBugSalesWithQuery(queryParam: string): Promise<BugSale[]> {
 
   await page.goto(url, { waitUntil: 'load' });
 
+  const numberOfScrollEvents = 10;
+  await scrollPage(page, numberOfScrollEvents);
+
   const articles = await page.$$('article');
 
   const sales: BugSale[] = [];
@@ -121,6 +142,21 @@ async function scrapBugSalesWithQuery(queryParam: string): Promise<BugSale[]> {
   return sales;
 }
 
+async function scrollPage(page: Page, numberOfScrollEvents = 5): Promise<void> {
+  let currentScrollEvent = 1;
+  while (currentScrollEvent <= numberOfScrollEvents) {
+    await page.mouse.wheel({ deltaY: 2000 });
+
+    await sleep(1000);
+
+    currentScrollEvent++;
+  }
+}
+
+function sleep(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
 function verifyIfLocalCacheIsStale(bugSales: BugSale[]): boolean {
   const itemsNotCached: BugSale[] = bugSales.filter(
     ({ id }: BugSale) => !localCache.has(id)
@@ -161,22 +197,3 @@ function updateLocaCache(bugSales: BugSale[]) {
 
   bugSales.forEach((bugSale: BugSale) => localCache.set(bugSale.id, bugSale));
 }
-
-// Uncomment to test locally and comment the cron schedule expression
-// (async () => {
-//   console.log('Requesting sales bug');
-//   const bugSales = await requestBugSales();
-
-//   if (bugSales) {
-//     const isLocalCacheStale = verifyIfLocalCacheIsStale(bugSales);
-//     console.log(localCache.keys());
-//     if (isLocalCacheStale) {
-//       console.log('POST to bug sales processor API');
-//       // await postBugSales(bugSales);
-//       console.log('Updating cache');
-//       updateLocaCache(bugSales);
-//     } else {
-//       console.log('Cache not stale, nothing to do');
-//     }
-//   }
-// })();
