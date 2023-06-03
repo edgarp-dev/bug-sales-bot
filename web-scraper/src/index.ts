@@ -34,6 +34,7 @@ const isLocalhost = process.env.LOCALHOST === 'true';
 // })();
 
 cron.schedule('* * * * *', async () => {
+  console.log('v0.5.0');
   console.log('Requesting sales');
   const bugSales = await requestBugSales();
 
