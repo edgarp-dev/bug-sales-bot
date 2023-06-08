@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import puppeteer, { PuppeteerLaunchOptions, Page } from 'puppeteer';
+import puppeteer, { PuppeteerLaunchOptions, Page, Browser } from 'puppeteer';
 import apiGatewayFactory from 'aws-api-gateway-client';
 import NodeCache from 'node-cache';
 
@@ -12,6 +12,8 @@ type BugSale = {
 };
 
 const localCache = new NodeCache();
+
+let browser: Browser | undefined = undefined;
 
 const isLocalhost = process.env.LOCALHOST === 'true';
 
@@ -34,10 +36,9 @@ const isLocalhost = process.env.LOCALHOST === 'true';
 // })();
 
 cron.schedule('* * * * *', async () => {
-  console.log('v0.5.0');
+  console.log('v0.5.1');
   console.log('Requesting sales');
   const bugSales = await requestBugSales();
-
   if (bugSales) {
     console.log('Veryfing cache');
     const isLocalCacheStale = verifyIfLocalCacheIsStale(bugSales);
@@ -54,30 +55,20 @@ cron.schedule('* * * * *', async () => {
 });
 
 async function requestBugSales(): Promise<BugSale[] | undefined> {
-  const results = await Promise.all([
-    scrapBugSalesWithQuery('bug'),
-    scrapBugSalesWithQuery('error')
-  ])
-    .then((resultsSets: Array<BugSale[]>): BugSale[] => {
-      let searchResults: BugSale[] = [];
+  const bugQueryResults = await scrapBugSalesWithQuery('bug');
+  const errorQueryResults = await scrapBugSalesWithQuery('error');
 
-      resultsSets.forEach((results) => {
-        searchResults = searchResults.concat(results);
-      });
+  const resultsWithoutExpiredSales = [
+    ...bugQueryResults,
+    ...errorQueryResults
+  ].filter((bugSale: BugSale) => !bugSale.isExpired);
 
-      return searchResults;
-    })
-    .then((searchResults: BugSale[]): BugSale[] => {
-      return searchResults.filter((result) => !result.isExpired);
-    })
-    .catch((error) => console.log(error));
-
-  return results ?? undefined;
+  return resultsWithoutExpiredSales ?? undefined;
 }
 
 async function scrapBugSalesWithQuery(queryParam: string): Promise<BugSale[]> {
   const puppeteerConfig: PuppeteerLaunchOptions = {
-    headless: 'new',
+    headless: false,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   };
 
@@ -85,7 +76,8 @@ async function scrapBugSalesWithQuery(queryParam: string): Promise<BugSale[]> {
     puppeteerConfig.executablePath = '/usr/bin/chromium-browser';
   }
 
-  const browser = await puppeteer.launch(puppeteerConfig);
+  browser = await puppeteer.launch(puppeteerConfig);
+
   const page = await browser.newPage();
 
   const url = `https://www.promodescuentos.com/search?q=${queryParam}`;
@@ -187,7 +179,7 @@ const postBugSales = async (bugSales: BugSale[]): Promise<void> => {
       requestBody
     );
 
-    console.log(response);
+    console.log(response.data);
   } catch (error: any) {
     console.log(error.message);
   }
