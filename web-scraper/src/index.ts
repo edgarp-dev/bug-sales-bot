@@ -36,21 +36,25 @@ const isLocalhost = process.env.LOCALHOST === 'true';
 // })();
 
 cron.schedule('* * * * *', async () => {
-  console.log('v0.5.1');
-  console.log('Requesting sales');
-  const bugSales = await requestBugSales();
-  if (bugSales) {
-    console.log('Veryfing cache');
-    const isLocalCacheStale = verifyIfLocalCacheIsStale(bugSales);
+  try {
+    console.log('v0.5.2');
+    console.log('Requesting sales');
+    const bugSales = await requestBugSales();
+    if (bugSales) {
+      console.log('Veryfing cache');
+      const isLocalCacheStale = verifyIfLocalCacheIsStale(bugSales);
 
-    if (isLocalCacheStale) {
-      console.log('POST to bug sales processor API');
-      await postBugSales(bugSales);
-      console.log('Updating cache');
-      updateLocaCache(bugSales);
-    } else {
-      console.log('Cache not stale, nothing to do');
+      if (isLocalCacheStale) {
+        console.log('POST to bug sales processor API');
+        await postBugSales(bugSales);
+        console.log('Updating cache');
+        updateLocaCache(bugSales);
+      } else {
+        console.log('Cache not stale, nothing to do');
+      }
     }
+  } catch (error: any) {
+    console.log(error);
   }
 });
 
@@ -68,7 +72,7 @@ async function requestBugSales(): Promise<BugSale[] | undefined> {
 
 async function scrapBugSalesWithQuery(queryParam: string): Promise<BugSale[]> {
   const puppeteerConfig: PuppeteerLaunchOptions = {
-    headless: false,
+    headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   };
 
@@ -158,31 +162,27 @@ function verifyIfLocalCacheIsStale(bugSales: BugSale[]): boolean {
 }
 
 const postBugSales = async (bugSales: BugSale[]): Promise<void> => {
-  try {
-    const config = {
-      invokeUrl: 'https://eab1jsxs3g.execute-api.us-east-1.amazonaws.com',
-      region: process.env.AWS_REGION,
-      accessKey: process.env.AWS_ACCESS_KEY_ID,
-      secretKey: process.env.AWS_SECRET_ACCESS_KEY
-    };
+  const config = {
+    invokeUrl: 'https://eab1jsxs3g.execute-api.us-east-1.amazonaws.com',
+    region: process.env.AWS_REGION,
+    accessKey: process.env.AWS_ACCESS_KEY_ID,
+    secretKey: process.env.AWS_SECRET_ACCESS_KEY
+  };
 
-    const requestBody = JSON.stringify({
-      bugSales
-    });
+  const requestBody = JSON.stringify({
+    bugSales
+  });
 
-    const apiGatewayClient = apiGatewayFactory.newClient(config);
-    const response = await apiGatewayClient.invokeApi(
-      {},
-      '/dev/sales',
-      'POST',
-      undefined,
-      requestBody
-    );
+  const apiGatewayClient = apiGatewayFactory.newClient(config);
+  const response = await apiGatewayClient.invokeApi(
+    {},
+    '/dev/sales',
+    'POST',
+    undefined,
+    requestBody
+  );
 
-    console.log(response.data);
-  } catch (error: any) {
-    console.log(error.message);
-  }
+  console.log(response.data);
 };
 
 function updateLocaCache(bugSales: BugSale[]) {
