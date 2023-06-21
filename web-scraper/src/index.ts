@@ -1,5 +1,9 @@
 import cron from 'node-cron';
-import puppeteer, { PuppeteerLaunchOptions, Page, Browser } from 'puppeteer';
+import puppeteer, {
+  PuppeteerNodeLaunchOptions,
+  Page,
+  Browser
+} from 'puppeteer';
 import apiGatewayFactory from 'aws-api-gateway-client';
 import NodeCache from 'node-cache';
 
@@ -37,7 +41,7 @@ const isLocalhost = process.env.LOCALHOST === 'true';
 
 cron.schedule('* * * * *', async () => {
   try {
-    console.log('v0.5.2');
+    console.log('v0.5.13');
     console.log('Requesting sales');
     const bugSales = await requestBugSales();
     if (bugSales) {
@@ -59,21 +63,26 @@ cron.schedule('* * * * *', async () => {
 });
 
 async function requestBugSales(): Promise<BugSale[] | undefined> {
-  const bugQueryResults = await scrapBugSalesWithQuery('bug');
-  const errorQueryResults = await scrapBugSalesWithQuery('error');
+  const bugQueryResults = await scrapBugSalesWithQuery(['bug', 'error']);
 
-  const resultsWithoutExpiredSales = [
-    ...bugQueryResults,
-    ...errorQueryResults
-  ].filter((bugSale: BugSale) => !bugSale.isExpired);
+  const resultsWithoutExpiredSales = [...bugQueryResults].filter(
+    (bugSale: BugSale) => !bugSale.isExpired
+  );
 
   return resultsWithoutExpiredSales ?? undefined;
 }
 
-async function scrapBugSalesWithQuery(queryParam: string): Promise<BugSale[]> {
-  const puppeteerConfig: PuppeteerLaunchOptions = {
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+async function scrapBugSalesWithQuery(
+  queryParams: string[]
+): Promise<BugSale[]> {
+  const puppeteerConfig: PuppeteerNodeLaunchOptions = {
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-gpu',
+      '--disable-dev-shm-usage'
+    ]
   };
 
   if (!isLocalhost) {
@@ -81,59 +90,62 @@ async function scrapBugSalesWithQuery(queryParam: string): Promise<BugSale[]> {
   }
 
   browser = await puppeteer.launch(puppeteerConfig);
-
   const page = await browser.newPage();
 
-  const url = `https://www.promodescuentos.com/search?q=${queryParam}`;
-
-  await page.goto(url, { waitUntil: 'load' });
-
-  const numberOfScrollEvents = 10;
-  await scrollPage(page, numberOfScrollEvents);
-
-  const articles = await page.$$('article');
-
   const sales: BugSale[] = [];
-  for (const article of articles) {
-    const linkElement = await article.$('.thread-title a');
 
-    const id = await page.evaluate(
-      (element) => element.getAttribute('id'),
-      article
-    );
+  for await (const queryParam of queryParams) {
+    const url = `https://www.promodescuentos.com/search?q=${queryParam}`;
 
-    const title = await page.evaluate(
-      (element) => element.textContent,
-      linkElement
-    );
-    const href = await page.evaluate(
-      (element) => element.getAttribute('href'),
-      linkElement
-    );
+    await page.goto(url, { waitUntil: 'load' });
 
-    const imageElement = await article.$('.thread-image');
-    const imageUrl = await page.evaluate(
-      (element) => element.getAttribute('src'),
-      imageElement
-    );
+    const numberOfScrollEvents = 10;
+    await scrollPage(page, numberOfScrollEvents);
 
-    const isExpiredElement = await article.$(
-      '.size--all-s.text--color-grey.space--l-1.space--r-2.cept-show-expired-threads.hide--toW3'
-    );
-    const isExpired = await page.evaluate(
-      (element) => (element ? element.textContent : null),
-      isExpiredElement
-    );
+    const articles = await page.$$('article');
 
-    sales.push({
-      id,
-      title,
-      url: href,
-      imageUrl,
-      isExpired: isExpired === 'Expirado' || false
-    });
+    for (const article of articles) {
+      const linkElement = await article.$('.thread-title a');
+
+      const id = await page.evaluate(
+        (element) => element.getAttribute('id'),
+        article
+      );
+
+      const title = await page.evaluate(
+        (element) => element.textContent,
+        linkElement
+      );
+      const href = await page.evaluate(
+        (element) => element.getAttribute('href'),
+        linkElement
+      );
+
+      const imageElement = await article.$('.thread-image');
+      const imageUrl = await page.evaluate(
+        (element) => element.getAttribute('src'),
+        imageElement
+      );
+
+      const isExpiredElement = await article.$(
+        '.size--all-s.text--color-grey.space--l-1.space--r-2.cept-show-expired-threads.hide--toW3'
+      );
+      const isExpired = await page.evaluate(
+        (element) => (element ? element.textContent : null),
+        isExpiredElement
+      );
+
+      sales.push({
+        id,
+        title,
+        url: href,
+        imageUrl,
+        isExpired: isExpired === 'Expirado' || false
+      });
+    }
   }
 
+  await page.close();
   await browser.close();
 
   return sales;
