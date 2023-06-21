@@ -7,7 +7,7 @@ phases:
     commands:
       - npm install -g yarn
       - cd web-scraper/
-      - yarn install --ignore-engines
+      - yarn install
   build:
     commands:
       - yarn sanity

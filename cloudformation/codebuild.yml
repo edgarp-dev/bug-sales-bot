@@ -13,6 +13,12 @@ Parameters:
     ArtifactsBucket:
         Type: String
         Default: ""
+    SkipPuppeteerDownload:
+        Type: String
+        Default: false
+        AllowedValues:
+            - true
+            - false
 
 Resources:
     CodeBuild:
@@ -36,6 +42,8 @@ Resources:
                     - Name: ENV
                       Type: PLAINTEXT
                       Value: !Ref Env
+                    - Name: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+                      Value: !Ref SkipPuppeteerDownload
 
     CodeBuildRole:
         Type: AWS::IAM::Role

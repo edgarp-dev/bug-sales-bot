@@ -143,6 +143,7 @@ Resources:
                 Name: !Sub web-scraper-sanity-${Env}
                 BuildSpec: buildspec/web-scraper-sanity.yml
                 Env: !Ref Env
+                SkipPuppeteerDownload: true
 
     BugSalesProcessorLambdaSanity:
         Type: AWS::CloudFormation::Stack
