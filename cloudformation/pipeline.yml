@@ -50,6 +50,18 @@ Resources:
                             Owner: AWS
                             Version: "1"
                             Provider: CodeBuild
+                        Name: Web-Scraper-Sanity
+                        Configuration:
+                            ProjectName: !GetAtt WebScraperSanity.Outputs.CodeBuildProjectName
+                        RunOrder: 2
+
+                      - InputArtifacts:
+                            - Name: SourceCode
+                        ActionTypeId:
+                            Category: Build
+                            Owner: AWS
+                            Version: "1"
+                            Provider: CodeBuild
                         Name: Bug-Sales-Processor-Lambda-Sanity
                         Configuration:
                             ProjectName: !GetAtt BugSalesProcessorLambdaSanity.Outputs.CodeBuildProjectName
@@ -121,6 +133,16 @@ Resources:
                                 - "iam:PassRole"
                                 - "codestar-connections:UseConnection"
                             Resource: "*"
+
+    WebScraperSanity:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yml
+            TimeoutInMinutes: 10
+            Parameters:
+                Name: !Sub web-scraper-sanity-${Env}
+                BuildSpec: buildspec/web-scraper-sanity.yml
+                Env: !Ref Env
 
     BugSalesProcessorLambdaSanity:
         Type: AWS::CloudFormation::Stack
