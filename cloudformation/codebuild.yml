@@ -19,6 +19,9 @@ Parameters:
         AllowedValues:
             - true
             - false
+    DockerHubCrendentials:
+        Type: String
+        Default: ""
 
 Resources:
     CodeBuild:
@@ -44,6 +47,8 @@ Resources:
                       Value: !Ref Env
                     - Name: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
                       Value: !Ref SkipPuppeteerDownload
+                    - Name: DOCKER_CREDENTIALS
+                      Value: !Ref DockerHubCrendentials
 
     CodeBuildRole:
         Type: AWS::IAM::Role

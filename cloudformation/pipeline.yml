@@ -79,6 +79,20 @@ Resources:
                             ProjectName: !GetAtt NotificationsProcessorSanity.Outputs.CodeBuildProjectName
                         RunOrder: 2
 
+                - Name: Deploy-Web-Scraper
+                  Actions:
+                      - InputArtifacts:
+                            - Name: SourceCode
+                        ActionTypeId:
+                            Category: Build
+                            Owner: AWS
+                            Version: "1"
+                            Provider: CodeBuild
+                        Name: Web-Scraper-Deploy
+                        Configuration:
+                            ProjectName: !GetAtt NotificationsProcessorDeploy.Outputs.CodeBuildProjectName
+                        RunOrder: 3
+
                 - Name: Deploy-Notitfications-Processor
                   Actions:
                       - InputArtifacts:
@@ -91,7 +105,7 @@ Resources:
                         Name: Notifications-Processor-Deploy
                         Configuration:
                             ProjectName: !GetAtt NotificationsProcessorDeploy.Outputs.CodeBuildProjectName
-                        RunOrder: 3
+                        RunOrder: 4
 
                 - Name: Deploy-Bug-Sales-Processor
                   Actions:
@@ -105,7 +119,7 @@ Resources:
                         Name: Bug-Sales-Processor-Deploy
                         Configuration:
                             ProjectName: !GetAtt BugSalesProcessorLambdaDeploy.Outputs.CodeBuildProjectName
-                        RunOrder: 4
+                        RunOrder: 5
 
     CodePipelineRole:
         Type: AWS::IAM::Role
@@ -164,6 +178,18 @@ Resources:
                 Name: !Sub bug-sales-notifications-processor-sanity-${Env}
                 BuildSpec: buildspec/notifications-processor-sanity.yml
                 Env: !Ref Env
+    
+    WebScraperDeploy:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yml
+            TimeoutInMinutes: 10
+            Parameters:
+                Name: !Sub web-scraper-deploy-${Env}
+                BuildSpec: buildspec/web-scraper-deploy.yml
+                Env: !Ref Env
+                ArtifactsBucket: !Ref ArtifactsBucket
+                DockerHubCrendentials: "{{resolve:ssm:/edgarp-dev/docker-hub-crendentials:1}}"
 
     BugSalesProcessorLambdaDeploy:
         Type: AWS::CloudFormation::Stack
