@@ -10,3 +10,4 @@ phases:
   build:
     commands:
       - docker login -u edgarpdev -p $DOCKER_CREDENTIALS
+      - ./build-docker.sh

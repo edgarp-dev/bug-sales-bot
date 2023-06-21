@@ -90,7 +90,7 @@ Resources:
                             Provider: CodeBuild
                         Name: Web-Scraper-Deploy
                         Configuration:
-                            ProjectName: !GetAtt NotificationsProcessorDeploy.Outputs.CodeBuildProjectName
+                            ProjectName: !GetAtt WebScraperDeploy.Outputs.CodeBuildProjectName
                         RunOrder: 3
 
                 - Name: Deploy-Notitfications-Processor
