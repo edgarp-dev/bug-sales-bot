@@ -11,6 +11,7 @@ phases:
       - mv "buildx-$BUILDX_VERSION.linux-arm-v6" ~/.docker/cli-plugins/docker-buildx
       - chmod +x ~/.docker/cli-plugins/docker-buildx
       - docker --version
+      - docker buildx version
   build:
     commands:
       - cd web-scraper/
