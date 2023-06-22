@@ -22,6 +22,13 @@ Parameters:
     DockerHubCrendentials:
         Type: String
         Default: ""
+    PrivilegedMode:
+        Type: String
+        Default: false
+        AllowedValues:
+            - true
+            - false
+
 
 Resources:
     CodeBuild:
@@ -38,6 +45,7 @@ Resources:
                 Type: ARM_CONTAINER
                 ComputeType: BUILD_GENERAL1_SMALL
                 Image: aws/codebuild/amazonlinux2-aarch64-standard:3.0
+                PrivilegedMode: !Ref PrivilegedMode
                 EnvironmentVariables:
                     - Name: ARTIFACTS_BUCKET
                       Type: PLAINTEXT

@@ -190,6 +190,7 @@ Resources:
                 Env: !Ref Env
                 ArtifactsBucket: !Ref ArtifactsBucket
                 DockerHubCrendentials: "{{resolve:ssm:/edgarp-dev/docker-hub-crendentials:1}}"
+                PrivilegedMode: true
 
     BugSalesProcessorLambdaDeploy:
         Type: AWS::CloudFormation::Stack
