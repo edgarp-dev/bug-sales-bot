@@ -6,4 +6,4 @@ docker buildx use bug-sales-builder
 
 docker buildx inspect --bootstrap
 
-docker buildx build --platform linux/amd64 -t edgarpdev/bug-sales-bot-web-scraper --push .
+docker buildx build --network=host --platform linux/amd64 -t edgarpdev/bug-sales-bot-web-scraper --push .
