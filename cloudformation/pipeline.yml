@@ -188,9 +188,9 @@ Resources:
                 Name: !Sub web-scraper-codebuild-deploy-${Env}
                 BuildSpec: buildspec/web-scraper-deploy.yml
                 Env: !Ref Env
-                ArtifactsBucket: !Ref ArtifactsBucket
                 DockerHubCrendentials: "{{resolve:ssm:/edgarp-dev/docker-hub-crendentials:1}}"
-                PrivilegedMode: true
+                AccessKeyId: "{{resolve:ssm:/bug-sales-bot-aws-access-key-id:1}}"
+                SecretAccessKey: "{{resolve:ssm:/bug-sales-bot-aws-secret-access-key:1}}"
 
     BugSalesProcessorLambdaDeploy:
         Type: AWS::CloudFormation::Stack

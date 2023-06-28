@@ -1,6 +1,6 @@
 #! /bin/bash
 
-docker buildx create --name bug-sales-builder --driver-opt network=host --buildkitd-flags '--allow-insecure-entitlement network.host'
+docker buildx create --name bug-sales-builder
 
 docker buildx use bug-sales-builder
 

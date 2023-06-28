@@ -10,24 +10,12 @@ Parameters:
         Type: String
     Env:
         Type: String
-    ArtifactsBucket:
-        Type: String
-        Default: ""
-    SkipPuppeteerDownload:
-        Type: String
-        Default: false
-        AllowedValues:
-            - true
-            - false
     DockerHubCrendentials:
         Type: String
-        Default: ""
-    PrivilegedMode:
+    AccessKeyId:
         Type: String
-        Default: false
-        AllowedValues:
-            - true
-            - false
+    SecretAccessKey:
+        Type: String
 
 
 Resources:
@@ -45,18 +33,21 @@ Resources:
                 Type: LINUX_CONTAINER
                 ComputeType: BUILD_GENERAL1_SMALL
                 Image: aws/codebuild/amazonlinux2-x86_64-standard:2.0
-                PrivilegedMode: !Ref PrivilegedMode
+                PrivilegedMode: True
                 EnvironmentVariables:
-                    - Name: ARTIFACTS_BUCKET
-                      Type: PLAINTEXT
-                      Value: !Ref ArtifactsBucket
                     - Name: ENV
                       Type: PLAINTEXT
                       Value: !Ref Env
                     - Name: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-                      Value: !Ref SkipPuppeteerDownload
+                      Value: true
                     - Name: DOCKER_CREDENTIALS
                       Value: !Ref DockerHubCrendentials
+                    - Name: REGION
+                      Value: !Ref "AWS::Region"
+                    - Name: ACCESS_KEY_ID
+                      Value: !Ref AccessKeyId
+                    - Name: SECRET_ACCESS_KEY
+                      Value: !Ref SecretAccessKey
 
     CodeBuildRole:
         Type: AWS::IAM::Role
