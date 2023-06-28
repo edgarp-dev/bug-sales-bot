@@ -1,10 +1,15 @@
 FROM alpine
 
-ENV LOCALHOST=false
+ARG ARG_AWS_REGION
+ARG ARG_AWS_ACCESS_KEY_ID
+ARG ARG_AWS_SECRET_ACCESS_KEY
 
-ARG AWS_REGION
-ARG AWS_ACCESS_KEY_ID
-ARG AWS_SECRET_ACCESS_KEY
+ENV AWS_REGION=$ARG_AWS_REGION
+ENV AWS_ACCESS_KEY_ID=$ARG_AWS_ACCESS_KEY_ID
+ENV AWS_SECRET_ACCESS_KEY=$ARG_AWS_SECRET_ACCESS_KEY
+ENV LOCALHOST=false
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Installs latest Chromium (100) package.
 RUN apk add --no-cache \
@@ -20,9 +25,6 @@ RUN apk add --no-cache \
 ADD https://github.com/Yelp/dumb-init/releases/download/v1.2.2/dumb-init_1.2.2_x86_64 /usr/local/bin/dumb-init
 RUN chmod +x /usr/local/bin/dumb-init
 ENTRYPOINT ["dumb-init", "--"]
-
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 WORKDIR /usr/src/app
 
