@@ -28,6 +28,4 @@ COPY . .
 
 RUN yarn build
 
-USER pptruser
-
 CMD [ "node", "build/index.js" ]
