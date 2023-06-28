@@ -182,10 +182,10 @@ Resources:
     WebScraperDeploy:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yml
+            TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/web-scraper-docker-codebuild.yml
             TimeoutInMinutes: 10
             Parameters:
-                Name: !Sub web-scraper-deploy-${Env}
+                Name: !Sub web-scraper-codebuild-deploy-${Env}
                 BuildSpec: buildspec/web-scraper-deploy.yml
                 Env: !Ref Env
                 ArtifactsBucket: !Ref ArtifactsBucket
