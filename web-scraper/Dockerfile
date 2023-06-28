@@ -1,5 +1,10 @@
 FROM alpine
 
+ENV LOCALHOST=false
+ENV AWS_REGION=""
+ENV AWS_ACCESS_KEY_ID=""
+ENV AWS_SECRET_ACCESS_KEY=""
+
 # Installs latest Chromium (100) package.
 RUN apk add --no-cache \
     chromium \
