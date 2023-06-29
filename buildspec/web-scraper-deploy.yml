@@ -1,0 +1,9 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - cd web-scraper/
+      - cat ./src/index.ts
+      - docker login -u edgarpdev -p $DOCKER_CREDENTIALS
+      - ./build-docker-codebuild.sh

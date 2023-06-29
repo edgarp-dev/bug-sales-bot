@@ -41,7 +41,7 @@ const isLocalhost = process.env.LOCALHOST === 'true';
 
 cron.schedule('* * * * *', async () => {
   try {
-    console.log('v0.5.13');
+    console.log('v0.5.27');
     console.log('Requesting sales');
     const bugSales = await requestBugSales();
     if (bugSales) {
@@ -63,7 +63,11 @@ cron.schedule('* * * * *', async () => {
 });
 
 async function requestBugSales(): Promise<BugSale[] | undefined> {
-  const bugQueryResults = await scrapBugSalesWithQuery(['bug', 'error']);
+  const bugQueryResults = await scrapBugSalesWithQuery([
+    'bug',
+    'error',
+    'corran'
+  ]);
 
   const resultsWithoutExpiredSales = [...bugQueryResults].filter(
     (bugSale: BugSale) => !bugSale.isExpired
