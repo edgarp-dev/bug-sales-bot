@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'notifications-processor infrastructure resources
+
+  '
+Parameters:
+  Env:
+    Type: String
+Resources:
+  NotificationsProcessorLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: bug-sales-notifications-processor-${Env}
+      CodeUri: s3://bug-sales-artifacts-bucket-dev/notifications-processor-artifacts-dev/5fc68885df1a3f9cdef8c7fa11d55e0c
+      Handler: app.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          TELEGRAM_BOT_TOKEN:
+            Fn::Sub: '{{resolve:ssm:/bug-sales-bot/${Env}/telegram-token:1}}'
+          ENV:
+            Ref: Env
+          NODE_OPTIONS: ' --enable-source-maps'
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+        - app.ts
+        Minify: true
+        Sourcemap: true
+        Target: es2020
+      SamResourceId: NotificationsProcessorLambda
+  NotificationsSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+      - Protocol: lambda
+        Endpoint:
+          Fn::GetAtt:
+          - NotificationsProcessorLambda
+          - Arn
+    Metadata:
+      SamResourceId: NotificationsSNSTopic
+  NotificationsProcessorLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Ref: NotificationsProcessorLambda
+      Principal: sns.amazonaws.com
+    Metadata:
+      SamResourceId: NotificationsProcessorLambdaPermission
+  NotificationsTopicSSMParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      DataType: text
+      Name:
+        Fn::Sub: bug-sales-bot-notifications-processor-sns-topic-arn-${Env}
+      Tier: Standard
+      Type: String
+      Value:
+        Fn::GetAtt:
+        - NotificationsSNSTopic
+        - TopicArn
+    Metadata:
+      SamResourceId: NotificationsTopicSSMParameter

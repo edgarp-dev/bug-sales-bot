@@ -1,0 +1,19 @@
+{
+    "Records": [
+        {
+            "Sns": {
+                "MessageAttributes": {
+                    "title": {
+                        "Value": "Event test"
+                    },
+                    "url": {
+                        "Value": "https://www.promodescuentos.com/ofertas/liverpool-galaxy-fold-4-bug-40-descuento-contado-863489"
+                    },
+                    "imageUrl": {
+                        "Value": "https://static.promodescuentos.com/threads/raw/ew67V/863489_1/re/1024x1024/qt/60/863489_1.jpg"
+                    }
+                }
+            }
+        }
+    ]
+}
