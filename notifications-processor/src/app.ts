@@ -16,11 +16,16 @@ export const lambdaHandler = async (event: SNSEvent): Promise<void> => {
         const url = urlAttribute.Value;
         const imageUrl = imageUrlAttribute.Value;
 
-        const message = `*${title}*  [${url}](${url})  [ ](${imageUrl}) image`;
+        // const message = `*${title}*  [${url}](${url})  [ ](${imageUrl}) image`;
+        const message = `
+            <b>${title}</b>
+            <a href="${url}">${url}</a>
+            <a href="${imageUrl}">&#8205;</a>
+        `;
 
         const response = await axios.post(telegramPostUrl, {
             chat_id: '@promobugsdev',
-            parse_mode: 'markdown',
+            parse_mode: 'HTML',
             text: message,
         });
 
