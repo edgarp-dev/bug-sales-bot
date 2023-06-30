@@ -16,7 +16,7 @@ export const lambdaHandler = async (event: SNSEvent): Promise<void> => {
         const url = urlAttribute.Value;
         const imageUrl = imageUrlAttribute.Value;
 
-        const message = `*${title}*  [${url}](${url})  [ ](${imageUrl})`;
+        const message = `*${title}*  [inline URL](${url})  [inline URL](${imageUrl})`;
 
         const response = await axios.post(telegramPostUrl, {
             chat_id: '@promobugsdev',
