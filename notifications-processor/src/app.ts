@@ -5,7 +5,7 @@ export const lambdaHandler = async (event: SNSEvent): Promise<void> => {
     try {
         const telegramBotToken = `bot${process.env.TELEGRAM_BOT_TOKEN}`;
         const telegramPostUrl = `https://api.telegram.org/${telegramBotToken}/sendMessage`;
-        console.log(event);
+        console.log(event.Records[0].Sns.MessageAttributes);
         const {
             title: titleAttribute,
             url: urlAttribute,
