@@ -23,7 +23,7 @@ export const lambdaHandler = async (event: SNSEvent): Promise<void> => {
             chat_id: '@promobugsdev',
             photo: imageUrl,
             parse_mode: 'HTML',
-            caption: message,
+            caption: 'test',
         });
 
         console.log(response);
