@@ -3,9 +3,6 @@ import axios from 'axios';
 
 export const lambdaHandler = async (event: SNSEvent): Promise<void> => {
     try {
-        const telegramBotToken = `bot${process.env.TELEGRAM_BOT_TOKEN}`;
-        const telegramPostUrl = `https://api.telegram.org/${telegramBotToken}/sendMessage`;
-
         const {
             title: titleAttribute,
             url: urlAttribute,
@@ -15,13 +12,16 @@ export const lambdaHandler = async (event: SNSEvent): Promise<void> => {
         const title = titleAttribute.Value;
         const url = urlAttribute.Value;
         const imageUrl = imageUrlAttribute.Value;
+        const captionHtml = `<b>${title}</b>\u000a\u000a<a href="${url}">${url}</a>`;
 
-        const message = `*${title}*  [${url}](${url})  [ ](${imageUrl})`;
+        const telegramBotToken = `bot${process.env.TELEGRAM_BOT_TOKEN}`;
+        const telegramPostUrl = `https://api.telegram.org/${telegramBotToken}/sendPhoto`;
 
         const response = await axios.post(telegramPostUrl, {
             chat_id: '@promobugsdev',
-            parse_mode: 'markdown',
-            text: message,
+            photo: imageUrl,
+            parse_mode: 'HTML',
+            caption: captionHtml,
         });
 
         console.log(response);
