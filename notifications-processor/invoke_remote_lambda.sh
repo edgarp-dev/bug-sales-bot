@@ -63,6 +63,5 @@ sam remote invoke --stack-name $STACK_NAME --event-file './invoke_remote_event.j
 
 if [[ "$TAIL_LOGS" == "true" ]]; then
   echo "Tailing logs."
-  # Add your log tailing command here
   sam logs --stack-name $STACK_NAME --name NotificationsProcessorLambda --tail
 fi
